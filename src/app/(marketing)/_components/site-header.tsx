@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { usePrivy, useLogin, useModalStatus } from "@privy-io/react-auth";
 import { LINKS } from "../_lib/links";
@@ -63,6 +63,8 @@ export default function SiteHeader({
   terminal?: boolean;
 } = {}) {
   const router = useRouter();
+  const pathname = usePathname();
+  const onTrade = pathname === "/trade";
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
@@ -143,6 +145,19 @@ export default function SiteHeader({
         <Image src="/logo-mark.png" alt="" width={28} height={28} priority />
         <span className="wordmark">ChadWallet</span>
       </Link>
+
+      {/* Trade entry point. On the trade page itself it's the current page, so it
+          renders as a non-interactive active marker (aria-current) rather than a
+          self-link; everywhere else it routes to /trade. */}
+      {onTrade ? (
+        <span className="nav-link nav-link--active" aria-current="page">
+          Trade
+        </span>
+      ) : (
+        <Link href="/trade" className="nav-link">
+          Trade
+        </Link>
+      )}
 
       {centerSlot && <div className="header-center">{centerSlot}</div>}
 

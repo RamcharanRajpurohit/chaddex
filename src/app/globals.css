@@ -185,6 +185,26 @@ html {
   letter-spacing: -0.02em;
 }
 
+/* Trade nav link — sits just right of the brand. Ghosted like the icon buttons,
+   brightens on hover. The --active variant (rendered on the trade page) is the
+   current-page marker: green, not clickable. */
+.site-header .nav-link {
+  margin-left: 22px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.site-header .nav-link:hover {
+  color: #fff;
+}
+.site-header .nav-link--active {
+  color: var(--green);
+  cursor: default;
+}
+
 /* Minimal header: brand left, actions right (no center nav). */
 .header-actions {
   margin-left: auto;
@@ -269,7 +289,9 @@ html {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  /* Subtle: the resolve is near-instant, so the placeholder should barely
+     register rather than read as a "loading" state the user waits on. */
+  background: rgba(255, 255, 255, 0.06);
   pointer-events: none;
   animation: auth-skeleton-pulse 1.3s ease-in-out infinite;
 }
@@ -296,18 +318,19 @@ html {
 @keyframes auth-skeleton-pulse {
   0%,
   100% {
-    opacity: 0.45;
+    opacity: 0.3;
   }
   50% {
-    opacity: 0.9;
+    opacity: 0.6;
   }
 }
 
-/* The real control (gear or Log in) eases in once Privy is ready, so it doesn't
-   hard-pop into place after the skeleton. */
+/* The real control (gear or Log in) eases in once Privy is ready. The fade is
+   short (120ms) so the resolve reads as instant — long enough to avoid a hard
+   pop, short enough that the user never perceives a loading-then-settle beat. */
 .auth-resolved {
   display: inline-flex;
-  animation: auth-fade-in 0.28s ease-out both;
+  animation: auth-fade-in 0.12s ease-out both;
 }
 @keyframes auth-fade-in {
   from {
