@@ -8,44 +8,22 @@ import { usePrivy, useLogin, useModalStatus } from "@privy-io/react-auth";
 import { LINKS } from "../_lib/links";
 import { AccountMenu } from "./account-menu";
 
-function LoginButton({
-  onClick,
-  mobile = false,
-}: {
-  onClick: () => void;
-  mobile?: boolean;
-}) {
-  return (
-    <button
-      className={`login-btn${mobile ? " mobile-login" : ""}`}
-      onClick={onClick}
-    >
-      <LoginIcon />
-      Log in
-    </button>
-  );
-}
-
 // Shown while Privy is still rehydrating the session (`!ready`). Privy must do a
-// network round-trip to verify the stored session before it knows whether to
-// show "Log in" or the account gear, so this slot always resolves a beat after
-// the static header. A small neutral dot (gear-sized, NOT a wide login pill)
+// network round-trip to verify the stored session before it knows whether the
+// account gear shows logged-in or logged-out content, so this slot always
+// resolves a beat after the static header. A small neutral dot (gear-sized)
 // keeps the footprint stable so the resolve reads as a quiet fade-in rather than
 // a shape-popping "deciding what to render" swap.
-function AuthSkeleton({ mobile = false }: { mobile?: boolean }) {
-  return (
-    <span
-      className={`auth-skeleton${mobile ? " mobile-login" : ""}`}
-      aria-hidden
-    />
-  );
+function AuthSkeleton() {
+  return <span className="auth-skeleton" aria-hidden />;
 }
 
 // Sticky split header. Intentionally minimal (fomo.family pattern): logo left,
-// ghosted X + Log in right — NO marketing nav links (Features/How it works are
-// redundant with a single-scroll page; Rewards isn't part of this product). On
-// login we send the user straight to the trading page. Transparent over the
-// hero → frosted-dark + shrink once scrolled; mobile collapses to a hamburger.
+// store/X icons + a single account gear right — NO marketing nav links and NO
+// mobile hamburger. The gear is the ONE control on every viewport: login lives
+// inside it when logged out, account + log out when logged in. On login we send
+// the user straight to the trading page. Transparent over the hero →
+// frosted-dark + shrink once scrolled.
 //
 // `centerSlot` lets the trading terminal inject its search box into the SAME
 // header (reuse, not a second header). `solid` (optional) forces the frosted
@@ -66,7 +44,6 @@ export default function SiteHeader({
   const pathname = usePathname();
   const onTrade = pathname === "/trade";
   const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
   const { ready, authenticated } = usePrivy();
   const { isOpen: isModalOpen } = useModalStatus();
@@ -120,18 +97,6 @@ export default function SiteHeader({
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  // Lock body scroll + close on Escape while the mobile menu is open.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [open]);
 
   return (
     <header
@@ -192,94 +157,19 @@ export default function SiteHeader({
         >
           <XIcon />
         </a>
+        {/* The ONE account control on every viewport — gear button with login
+            (logged out) or account + log out (logged in) inside. No separate
+            Log in pill, no mobile hamburger/overlay. Skeleton holds the slot
+            while Privy rehydrates. */}
         {!ready ? (
           <AuthSkeleton />
         ) : (
           <span className="auth-resolved">
-            {authenticated ? (
-              <AccountMenu />
-            ) : (
-              <LoginButton onClick={startLogin} />
-            )}
+            <AccountMenu onLogin={startLogin} />
           </span>
         )}
-        <button
-          className="hamburger"
-          aria-label="Open menu"
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-          onClick={() => setOpen(true)}
-        >
-          <span /><span /><span />
-        </button>
-      </div>
-
-      {/* Mobile full-screen overlay menu */}
-      <div
-        id="mobile-menu"
-        className={`mobile-menu ${open ? "open" : ""}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Menu"
-      >
-        <button
-          className="mobile-close"
-          aria-label="Close menu"
-          onClick={() => setOpen(false)}
-        >
-          ✕
-        </button>
-        <div className="mobile-actions">
-          {!ready ? (
-            <AuthSkeleton mobile />
-          ) : (
-            <span className="auth-resolved mobile-login">
-              {authenticated ? (
-                <AccountMenu mobile />
-              ) : (
-                <LoginButton
-                  mobile
-                  onClick={() => {
-                    setOpen(false);
-                    startLogin();
-                  }}
-                />
-              )}
-            </span>
-          )}
-          {/* same-page hash anchor, not a route — plain <a> avoids the router
-              prefetch that throws "Failed to fetch" */}
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a
-            href="/#download"
-            className="header-cta mobile-cta"
-            onClick={() => setOpen(false)}
-          >
-            Download the app
-          </a>
-        </div>
       </div>
     </header>
-  );
-}
-
-function LoginIcon() {
-  return (
-    <svg
-      width="17"
-      height="17"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-      <polyline points="10 17 15 12 10 7" />
-      <line x1="15" y1="12" x2="3" y2="12" />
-    </svg>
   );
 }
 

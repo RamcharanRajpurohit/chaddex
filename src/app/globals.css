@@ -232,56 +232,8 @@ html {
 .site-header .icon-btn:hover {
   color: #fff;
 }
-.site-header .header-cta {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 22px;
-  border-radius: 100px;
-  background: var(--green);
-  color: var(--on-green); /* dark text on green — WCAG 13.5:1 (white would fail) */
-  font-size: 15px;
-  font-weight: 700;
-  text-decoration: none;
-  box-shadow: 0 0 0 0 rgba(38, 237, 128, 0);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-}
-.site-header .header-cta:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.05);
-  box-shadow: 0 0 0 3px rgba(38, 237, 128, 0.25),
-    0 8px 24px rgba(38, 237, 128, 0.3);
-}
-.site-header .header-cta:active {
-  transform: translateY(0) scale(0.98);
-}
-
-/* ghost "Log in" button — secondary, sits left of the green Download CTA */
-.login-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 9px 18px;
-  border-radius: 100px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.04);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease;
-}
-.login-btn:hover {
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.08);
-}
-.login-btn:focus-visible {
-  outline: 2px solid var(--green);
-  outline-offset: 2px;
-}
-
 /* Placeholder shown in the auth slot while Privy rehydrates (`!ready`). A small
-   gear-sized neutral dot — NOT a wide login pill — so that whichever way the
-   slot resolves (tiny gear when logged in, or the Log in button), the footprint
+   gear-sized neutral dot so that whichever way the slot resolves, the footprint
    barely changes and the eye reads a calm fade, not a shape-popping swap. The
    soft pulse signals "loading" so the late resolve doesn't feel like a stall. */
 .auth-skeleton {
@@ -293,26 +245,6 @@ html {
      register rather than read as a "loading" state the user waits on. */
   background: rgba(255, 255, 255, 0.06);
   pointer-events: none;
-  animation: auth-skeleton-pulse 1.3s ease-in-out infinite;
-}
-.auth-skeleton.mobile-login {
-  /* in the mobile overlay the slot is full-width; center the dot in it */
-  width: 100%;
-  height: 22px;
-  background: none;
-  position: relative;
-  animation: none;
-}
-.auth-skeleton.mobile-login::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: 22px;
-  height: 22px;
-  margin-left: -11px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
   animation: auth-skeleton-pulse 1.3s ease-in-out infinite;
 }
 @keyframes auth-skeleton-pulse {
@@ -343,124 +275,39 @@ html {
 
 @media (prefers-reduced-motion: reduce) {
   .auth-skeleton,
-  .auth-skeleton.mobile-login::after {
-    animation: none;
-  }
   .auth-resolved {
     animation: none;
   }
 }
 
-/* mobile menu: stack login + download */
-.mobile-actions {
-  position: absolute;
-  bottom: 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  width: 80%;
-  max-width: 320px;
-}
-.mobile-login {
-  width: 100%;
-  justify-content: center;
-  padding: 14px;
-}
-
-/* hamburger (mobile only) */
-.hamburger {
-  display: none;
-  flex-direction: column;
-  gap: 5px;
-  background: none;
-  border: 0;
-  cursor: pointer;
-  padding: 6px;
-}
-.hamburger span {
-  width: 24px;
-  height: 2px;
-  background: #fff;
-  border-radius: 2px;
-}
-
-/* mobile overlay menu */
-.mobile-menu {
-  position: fixed;
-  inset: 0;
-  z-index: 55;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 40px;
-  background: rgba(6, 8, 10, 0.98);
-  backdrop-filter: blur(20px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s ease;
-}
-.mobile-menu.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-.mobile-close {
-  position: absolute;
-  top: 24px;
-  right: 28px;
-  background: none;
-  border: 0;
-  color: #fff;
-  font-size: 24px;
-  cursor: pointer;
-}
-.mobile-menu nav ul {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 28px;
-}
-.mobile-menu nav a {
-  color: #fff;
-  text-decoration: none;
-  font-size: 26px;
-  font-weight: 600;
-}
-.mobile-cta {
-  width: 100%;
-  justify-content: center;
-  font-size: 17px !important;
-  padding: 15px 40px !important;
-}
-
 /* focus-visible rings (WCAG 2.4.11) */
 .site-header a:focus-visible,
-.site-header button:focus-visible,
-.mobile-menu a:focus-visible {
+.site-header button:focus-visible {
   outline: 2px solid var(--green);
   outline-offset: 3px;
   border-radius: 4px;
 }
 
 @media (max-width: 820px) {
-  /* Collapse the desktop actions into the hamburger menu. The auth slot is the
-     wrapper (`.auth-resolved` once Privy resolves, `.auth-skeleton` while it
-     rehydrates) — NOT `.login-btn` directly, which is nested a level deeper and
-     so was never hit by an earlier `.header-actions > .login-btn` rule, leaving
-     the login pill to overflow the viewport on phones. Hide the wrappers (and
-     the account gear) so login/account lives only in the mobile overlay. */
-  .site-header .icon-btn,
-  .header-actions > .auth-resolved,
-  .header-actions > .auth-skeleton {
+  /* The store/X icon buttons collapse on phones; the account gear stays — it's
+     the one control on every viewport (login/account live inside it). */
+  .site-header .icon-btn {
     display: none;
   }
-  .hamburger {
-    display: flex;
+
+  /* On phones the logo mark alone carries the brand — hide the "ChadWallet"
+     wordmark to reclaim width for the search row + Trade link. */
+  .site-header .wordmark {
+    display: none;
+  }
+  /* The 22px nav-link margin was sized to sit beside the wordmark; with the
+     wordmark hidden it leaves a dead gap between the bare logo and Trade. Drop
+     it so the header's own 28px flex gap is the only spacing. */
+  .site-header .nav-link {
+    margin-left: 0;
   }
 
-  /* Terminal header search slot. In the flex row brand + Trade + hamburger eat
+  /* Terminal header search slot. In the flex row brand + Trade + gear eat
      all the width, squeezing `.header-center` (flex:1, min-width:0) down to a
      sliver — the input collapsed to ~icon width (so you couldn't see what you
      typed) and its `left-0 right-0` dropdown rendered as a thin vertical line.

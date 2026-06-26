@@ -5,11 +5,21 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useSolanaAddress } from "@/lib/use-solana-address";
 import { useSolBalance } from "@/lib/use-sol-balance";
 
-// Authenticated account control: a gear button that toggles a dropdown card
-// with the full address (click-to-copy), live SOL balance, and log out.
-// Shared by the desktop header and the mobile overlay.
-export function AccountMenu({ mobile = false }: { mobile?: boolean }) {
-  const { user, logout } = usePrivy();
+// Account control: a single gear button that toggles a dropdown. It is the ONE
+// header control on every viewport — there's no separate Log in button or mobile
+// hamburger. Logged in: the card shows the full address (click-to-copy), live SOL
+// balance, and log out. Logged out: the card shows a single "Log in" item that
+// runs the parent's Privy login flow. `mobile` only affects alignment.
+export function AccountMenu({
+  mobile = false,
+  onLogin,
+}: {
+  mobile?: boolean;
+  /** Start the Privy login flow (owned by the header). Required for the
+   *  logged-out menu's "Log in" item. */
+  onLogin?: () => void;
+}) {
+  const { user, authenticated, logout } = usePrivy();
   const address = useSolanaAddress();
   const balance = useSolBalance(address);
 
@@ -64,7 +74,23 @@ export function AccountMenu({ mobile = false }: { mobile?: boolean }) {
             ${mobile ? "left-1/2 -translate-x-1/2" : "right-0"}`}
         >
           <div>
-            {address && (
+            {/* Logged out: the gear is still the only control, so login lives
+                here as a single menu item. */}
+            {!authenticated && (
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  onLogin?.();
+                }}
+                className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[13.5px] font-medium text-slate-200 transition-colors hover:bg-white/5 hover:text-white"
+              >
+                <LoginIcon />
+                Log in
+              </button>
+            )}
+
+            {authenticated && address && (
               <>
                 {/* Balance + address hero — frosted glass panel. The strong
                     top→bottom white gradient + bright top highlight reads as
@@ -109,14 +135,14 @@ export function AccountMenu({ mobile = false }: { mobile?: boolean }) {
               </>
             )}
 
-            {user?.email?.address && (
+            {authenticated && user?.email?.address && (
               <div className="mt-2 truncate border-t border-white/[0.05] px-1 pt-2.5 text-[11px] text-white/30">
                 {user.email.address}
               </div>
             )}
 
-            {/* When there's no wallet yet, still allow logout */}
-            {!address && (
+            {/* Authenticated but no wallet yet (still provisioning) — still allow logout */}
+            {authenticated && !address && (
               <button
                 role="menuitem"
                 onClick={() => logout()}
@@ -139,6 +165,16 @@ function LogoutIcon() {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <polyline points="16 17 21 12 16 7" />
       <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+function LoginIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="flex-none opacity-70">
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <polyline points="10 17 15 12 10 7" />
+      <line x1="15" y1="12" x2="3" y2="12" />
     </svg>
   );
 }
