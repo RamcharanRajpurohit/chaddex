@@ -18,10 +18,10 @@ import {
 // route revalidates just returns the same cached payload (wasted requests). The
 // route's `use cache` is the real upstream throttle; these decide how often a
 // client asks the cache, and there's no point asking more often than it refreshes.
-const DETAIL_MS = 10_000; // /api/token revalidate 15s — detail is the live price; 10s keeps it snappy and is acceptable
+const DETAIL_MS = 20_000; // /api/token revalidate 15s — detail is the live price; 20s ≥ revalidate, still ~3 updates/min
 const OHLCV_MS = 60_000; // /api/ohlcv revalidate 60s
-const TRADES_MS = 30_000; // /api/trades revalidate 30s
-const HOLDERS_MS = 60_000; // /api/holders revalidate 60s
+const TRADES_MS = 45_000; // /api/trades revalidate 30s — 45s ≥ revalidate, less chatty
+const HOLDERS_MS = 120_000; // /api/holders revalidate 60s — counts barely move; 2min is plenty
 
 // ── parsers (defensive — never let bad JSON reach the UI) ──────────────────
 
