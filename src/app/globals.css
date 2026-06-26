@@ -445,8 +445,15 @@ html {
 }
 
 @media (max-width: 820px) {
+  /* Collapse the desktop actions into the hamburger menu. The auth slot is the
+     wrapper (`.auth-resolved` once Privy resolves, `.auth-skeleton` while it
+     rehydrates) — NOT `.login-btn` directly, which is nested a level deeper and
+     so was never hit by an earlier `.header-actions > .login-btn` rule, leaving
+     the login pill to overflow the viewport on phones. Hide the wrappers (and
+     the account gear) so login/account lives only in the mobile overlay. */
   .site-header .icon-btn,
-  .header-actions > .login-btn {
+  .header-actions > .auth-resolved,
+  .header-actions > .auth-skeleton {
     display: none;
   }
   .hamburger {
