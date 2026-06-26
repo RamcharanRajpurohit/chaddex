@@ -1,0 +1,1213 @@
+@import "tailwindcss";
+
+/* ChadWallet brand kit (pixel-sampled, authoritative — see REFERENCE.md).
+   These are the single source of truth for the theme: change a value here and
+   every Tailwind token below (and every component) re-skins. To re-theme the
+   whole site, edit only this block. */
+:root {
+  --green: #26ed80; /* primary CTA green */
+  --sol: #14f195; /* Solana green accent */
+  --lime: #ccff00; /* marketing-site accent (ticker flavour only) */
+  --red: #f34134; /* loss / sell red */
+  --muted: #9aa3b2; /* secondary text */
+  --dim: #6b7280; /* tertiary / greyed text */
+  --bg: #000; /* page background — BLACK, like the home page */
+  --surface: rgba(255, 255, 255, 0.02); /* card surface */
+  --surface-2: rgba(255, 255, 255, 0.05); /* raised surface / hover */
+  /* Terminal cards use the HOME-PAGE glass treatment (account-card look): a faint
+     white wash over black with a white hairline border — NOT a navy fill. */
+  --card: rgba(255, 255, 255, 0.03); /* glass card surface over black */
+  --card-2: rgba(255, 255, 255, 0.06); /* raised glass / hover */
+  /* Cool accent from the "Download App" ghost button (blue/white ramp). Used for
+     neutral-interactive accents so green stays reserved for gains/buy semantics. */
+  --blue: #78b4ff; /* rgba(120,180,255) */
+  --border: rgba(255, 255, 255, 0.08); /* hairline borders */
+  --border-strong: rgba(255, 255, 255, 0.16); /* visible borders */
+  --on-green: #04130b; /* text that sits on a green fill */
+}
+
+/* Expose the brand kit as Tailwind utility tokens (Tailwind v4 `@theme`).
+   `--color-*` here lets us write `text-green`, `bg-surface`, `border-border`,
+   etc. — utilities that resolve to the CSS vars above, so the theme stays
+   swappable from one place. */
+@theme inline {
+  --font-sans: var(--font-inter);
+  --color-green: var(--green);
+  --color-sol: var(--sol);
+  --color-lime: var(--lime);
+  --color-red: var(--red);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-card: var(--card);
+  --color-card-2: var(--card-2);
+  --color-blue: var(--blue);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-on-green: var(--on-green);
+
+  /* ── Fluid type scale (clamp: min on phones → max on desktop, scales with vw).
+     Use as text-display / text-h1 / text-h2 / text-h3 / text-lead / text-body /
+     text-eyebrow — NO hardcoded px in components. Change the scale here only. */
+  --text-display: clamp(2.5rem, 5.5vw, 4rem); /* hero h1 — sized so each line
+     stays on one line and the headline doesn't dominate the fold (fomo-clean) */
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.03em;
+  --text-h1: clamp(2rem, 5vw, 3.75rem); /* final-cta */
+  --text-h1--line-height: 1;
+  --text-h1--letter-spacing: -0.03em;
+  --text-h2: clamp(1.875rem, 4.5vw, 3.25rem); /* section titles */
+  --text-h2--line-height: 1.04;
+  --text-h2--letter-spacing: -0.03em;
+  --text-h3: clamp(1.625rem, 3.4vw, 2.5rem); /* feature-row titles */
+  --text-h3--line-height: 1.08;
+  --text-h3--letter-spacing: -0.03em;
+  --text-stat: clamp(1.75rem, 4vw, 2.75rem); /* big stat numbers */
+  --text-stat--line-height: 1.05;
+  --text-stat--letter-spacing: -0.02em;
+  --text-lead: clamp(1rem, 1.7vw, 1.25rem); /* hero/section sub */
+  --text-lead--line-height: 1.6;
+  --text-body: clamp(0.9375rem, 1.4vw, 1.125rem); /* body copy */
+  --text-body--line-height: 1.65;
+  --text-eyebrow: clamp(0.6875rem, 1vw, 0.8125rem); /* uppercase labels */
+  --text-eyebrow--line-height: 1.3;
+  --text-eyebrow--letter-spacing: 0.12em;
+
+  /* ── Fluid spacing (section rhythm). Use py-section, gap-rows, etc. */
+  --spacing-section: clamp(4rem, 9vw, 6rem); /* vertical section padding */
+  --spacing-rows: clamp(3.5rem, 8vw, 6rem); /* gap between zigzag rows */
+  --spacing-gutter: clamp(1.25rem, 4vw, 1.5rem); /* horizontal page gutter */
+
+  /* Content widths as rem so they scale with root font + stay consistent.
+     (Named to avoid clobbering Tailwind's built-in max-w-prose = 65ch.) */
+  --container-content: 70rem; /* ~1120px max content width */
+  --container-readable: 62.5rem; /* ~1000px (video/final-cta blocks) */
+  --container-copy: 35rem; /* ~560px lead/sub measure */
+}
+
+/* NOTE: no hand-written `* { margin: 0; box-sizing: border-box }` reset here.
+   Tailwind v4 Preflight already applies both to `*` inside its base layer. An
+   UNLAYERED universal reset (which is what a top-level rule here is) outranks
+   Tailwind's *layered* utilities regardless of specificity — so it silently
+   clobbered `mx-auto`/`mt-*` etc., breaking centering on the legal pages.
+   Let Preflight own the reset; utilities then win as intended. */
+
+body {
+  background: var(--bg);
+  color: #fff;
+  font-family: var(--font-inter), "Inter", system-ui, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  /* Hide the main window scrollbar everywhere (home + terminal) — page still
+     scrolls by wheel/trackpad. Modern-app convention; matches .term-scroll. */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* old Edge */
+}
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* Chrome / Safari / new Edge */
+}
+
+/* ── Site header: split layout, transparent→frosted-dark + shrink on scroll ── */
+html {
+  scroll-padding-top: 88px; /* anchors/skip-link clear the sticky header */
+}
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 20px 32px;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: padding 0.25s ease, background 0.25s ease, border-color 0.25s ease,
+    backdrop-filter 0.25s ease;
+}
+.site-header.scrolled {
+  padding: 12px 32px;
+  background: rgba(10, 10, 15, 0.92);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  border-bottom: 1px solid var(--border);
+}
+/* Terminal header: stays transparent like home, but ALWAYS keeps a visible bottom
+   hairline so the 3-column vertical separators have a horizontal line to meet
+   (without it they run up into nothing and look unfinished). Uses a STRONGER
+   border than --border (0.08, near-invisible on the dark header) so it actually
+   reads — !important to win over the base rule's transparent border-bottom. */
+.site-header.site-header--terminal {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+/* skip link — first focusable, off-screen until focused (WCAG 2.4.1) */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -100px;
+  z-index: 60;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--green);
+  color: var(--on-green);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+.skip-link:focus {
+  top: 12px;
+}
+
+.site-header .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #fff;
+  transition: transform 0.2s ease;
+}
+.site-header .brand:hover {
+  transform: scale(1.03);
+}
+.site-header .brand img {
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+}
+.site-header .wordmark {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+/* Minimal header: brand left, actions right (no center nav). */
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+/* Center slot (trading terminal search) — grows to fill, centers its child. The
+   `margin-left:auto` on .header-actions still pins actions right. */
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  padding: 0 16px;
+}
+.site-header .icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted); /* ghosted — subordinate to the CTA, not green */
+  transition: color 0.2s ease;
+}
+.site-header .icon-btn:hover {
+  color: #fff;
+}
+.site-header .header-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 22px;
+  border-radius: 100px;
+  background: var(--green);
+  color: var(--on-green); /* dark text on green — WCAG 13.5:1 (white would fail) */
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 0 0 0 rgba(38, 237, 128, 0);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+.site-header .header-cta:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 0 0 3px rgba(38, 237, 128, 0.25),
+    0 8px 24px rgba(38, 237, 128, 0.3);
+}
+.site-header .header-cta:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ghost "Log in" button — secondary, sits left of the green Download CTA */
+.login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.login-btn:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+}
+.login-btn:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+/* Placeholder shown in the auth slot while Privy rehydrates (`!ready`). A small
+   gear-sized neutral dot — NOT a wide login pill — so that whichever way the
+   slot resolves (tiny gear when logged in, or the Log in button), the footprint
+   barely changes and the eye reads a calm fade, not a shape-popping swap. The
+   soft pulse signals "loading" so the late resolve doesn't feel like a stall. */
+.auth-skeleton {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+  animation: auth-skeleton-pulse 1.3s ease-in-out infinite;
+}
+.auth-skeleton.mobile-login {
+  /* in the mobile overlay the slot is full-width; center the dot in it */
+  width: 100%;
+  height: 22px;
+  background: none;
+  position: relative;
+  animation: none;
+}
+.auth-skeleton.mobile-login::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  animation: auth-skeleton-pulse 1.3s ease-in-out infinite;
+}
+@keyframes auth-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* The real control (gear or Log in) eases in once Privy is ready, so it doesn't
+   hard-pop into place after the skeleton. */
+.auth-resolved {
+  display: inline-flex;
+  animation: auth-fade-in 0.28s ease-out both;
+}
+@keyframes auth-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-skeleton,
+  .auth-skeleton.mobile-login::after {
+    animation: none;
+  }
+  .auth-resolved {
+    animation: none;
+  }
+}
+
+/* mobile menu: stack login + download */
+.mobile-actions {
+  position: absolute;
+  bottom: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 80%;
+  max-width: 320px;
+}
+.mobile-login {
+  width: 100%;
+  justify-content: center;
+  padding: 14px;
+}
+
+/* hamburger (mobile only) */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 6px;
+}
+.hamburger span {
+  width: 24px;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+}
+
+/* mobile overlay menu */
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  background: rgba(6, 8, 10, 0.98);
+  backdrop-filter: blur(20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.mobile-menu.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.mobile-close {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  background: none;
+  border: 0;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+}
+.mobile-menu nav ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+.mobile-menu nav a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 26px;
+  font-weight: 600;
+}
+.mobile-cta {
+  width: 100%;
+  justify-content: center;
+  font-size: 17px !important;
+  padding: 15px 40px !important;
+}
+
+/* focus-visible rings (WCAG 2.4.11) */
+.site-header a:focus-visible,
+.site-header button:focus-visible,
+.mobile-menu a:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (max-width: 820px) {
+  .site-header .icon-btn,
+  .header-actions > .login-btn {
+    display: none;
+  }
+  .hamburger {
+    display: flex;
+  }
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: var(--bg);
+}
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.55);
+}
+.vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse 75% 55% at 50% 45%,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.35) 70%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+/* hero logo/eyebrow/h1/sub → migrated to Tailwind in hero.tsx.
+   .hero/.scrim/.vignette stay (full-bleed layout + scrim/vignette gradients). */
+.cta {
+  display: inline-flex;
+  gap: 14px;
+  margin-top: 34px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── CTA pills: dark charcoal with two counter-rotating colour-ramp arcs ── */
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 15px 30px;
+  border-radius: 100px;
+  font-weight: 600;
+  font-size: 16px;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  border: 0;
+  background: #0a0a0c;
+  overflow: hidden;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.05),
+    rgba(0, 0, 0, 0.3) 0 2px 6px, rgba(0, 0, 0, 0.14) 0 10px 14px,
+    rgba(0, 0, 0, 0.06) 0 22px 18px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+/* two arcs: ::before clockwise, ::after counter-clockwise, meeting at bottom */
+.btn::before,
+.btn::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 170%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+  pointer-events: none;
+  z-index: 0;
+}
+.btn::before {
+  background: conic-gradient(
+    from 0deg,
+    rgba(38, 237, 128, 0) 0deg,
+    rgba(38, 237, 128, 0.5) 18deg,
+    rgba(255, 255, 255, 1) 40deg,
+    rgba(38, 237, 128, 0.5) 62deg,
+    rgba(38, 237, 128, 0) 110deg,
+    rgba(38, 237, 128, 0) 360deg
+  );
+  animation: spinCW 10s linear infinite;
+}
+.btn::after {
+  background: conic-gradient(
+    from 0deg,
+    rgba(38, 237, 128, 0) 0deg,
+    rgba(38, 237, 128, 0) 250deg,
+    rgba(38, 237, 128, 0.5) 298deg,
+    rgba(255, 255, 255, 1) 320deg,
+    rgba(38, 237, 128, 0.5) 342deg,
+    rgba(38, 237, 128, 0) 360deg
+  );
+  animation: spinCCW 10s linear infinite;
+}
+/* inner dark pill covers the centre, leaving only the thin moving rim */
+.btn .fill {
+  position: absolute;
+  inset: 1.5px;
+  border-radius: inherit;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(#1c1c1e 0%, #060607 100%);
+}
+.btn .label,
+.btn .bolt,
+.btn .store-icon,
+.btn .store-text {
+  position: relative;
+  z-index: 2;
+}
+/* store badges: icon + two-line label ("Download on the" / "App Store") */
+.store-btn {
+  padding: 12px 26px;
+  gap: 12px;
+}
+.store-icon {
+  flex-shrink: 0;
+}
+.store-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+  text-align: left;
+}
+.store-top {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.7);
+}
+.store-name {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+@keyframes spinCW {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+@keyframes spinCCW {
+  to {
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+    0 0 18px rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.35) 0 4px 8px,
+    rgba(0, 0, 0, 0.16) 0 14px 16px, rgba(0, 0, 0, 0.07) 0 26px 20px;
+}
+/* ghost (Download App): cool blue/white ramp instead of green */
+.btn:not(.btn-primary)::before {
+  background: conic-gradient(
+    from 0deg,
+    rgba(20, 241, 149, 0) 0deg,
+    rgba(120, 180, 255, 0.5) 18deg,
+    rgba(255, 255, 255, 1) 40deg,
+    rgba(120, 180, 255, 0.5) 62deg,
+    rgba(120, 180, 255, 0) 110deg,
+    rgba(120, 180, 255, 0) 360deg
+  );
+}
+.btn:not(.btn-primary)::after {
+  background: conic-gradient(
+    from 0deg,
+    rgba(120, 180, 255, 0) 0deg,
+    rgba(120, 180, 255, 0) 250deg,
+    rgba(120, 180, 255, 0.5) 298deg,
+    rgba(255, 255, 255, 1) 320deg,
+    rgba(120, 180, 255, 0.5) 342deg,
+    rgba(120, 180, 255, 0) 360deg
+  );
+}
+.btn-primary .bolt {
+  color: var(--green);
+  filter: drop-shadow(0 0 5px rgba(38, 237, 128, 0.6));
+}
+
+/* ── Ticker: dark-glass running bar permanently pinned to the viewport ── */
+.ticker {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(10px);
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 11px 0;
+  display: flex;
+  align-items: center;
+}
+/* Bottom placement (default / only one used for now). */
+.ticker--bottom {
+  bottom: 0;
+  border-top: 1px solid rgba(38, 237, 128, 0.18);
+}
+/* Top placement — wired but not mounted yet. Sits above the header offset. */
+.ticker--top {
+  top: 0;
+  bottom: auto;
+  border-bottom: 1px solid rgba(38, 237, 128, 0.18);
+}
+
+/* Marquee (magicui / Ryan-Mulligan two-copy pattern): the viewport clips; inside
+   it sit N identical sequences (.ticker-seq), each animated translateX(0 →
+   -100% - gap). The "- gap" makes the seam between copies equal to the gap WITHIN
+   a copy, so the loop is seamless with no drag/hitch. --duration is a CONSTANT
+   (never recomputed in JS) → the animation is never restarted → no jump.
+   The marquee DOM is rendered once and never re-rendered (see token-banner.tsx),
+   so live price updates can't interrupt the scroll. */
+.ticker-viewport {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  overflow: hidden;
+  --gap: 44px;
+  gap: var(--gap);
+  --duration: 55s;
+}
+.ticker-seq {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--gap);
+  animation: ticker-marquee var(--duration) linear infinite;
+}
+@keyframes ticker-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% - var(--gap))); }
+}
+/* Pause on hover / keyboard focus so a moving token can actually be clicked. */
+.ticker:hover .ticker-seq,
+.ticker:focus-within .ticker-seq {
+  animation-play-state: paused;
+}
+
+/* Individual token = clickable link. */
+.ticker-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.15s ease;
+  flex: none;
+}
+.ticker-item:hover {
+  opacity: 0.7;
+}
+.ticker-item:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.ticker-logo {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  object-fit: cover;
+  align-self: center;
+  background: rgba(255, 255, 255, 0.06);
+  flex: none;
+}
+.ticker-item b {
+  font-weight: 600;
+  color: #e8edf5;
+}
+.ticker-price {
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+/* Stabilize numeric widths so live value updates don't reflow the track and
+   nudge the marquee. tabular-nums keeps digit width constant; min-width absorbs
+   length changes (e.g. "+5.2%" vs "+12.60%"). */
+.ticker-item i {
+  font-variant-numeric: tabular-nums;
+  display: inline-block;
+  min-width: 64px;
+}
+.ticker-price {
+  display: inline-block;
+  min-width: 72px;
+}
+.up {
+  color: var(--green);
+}
+.down {
+  color: var(--red);
+}
+
+/* LIVE status dot: solid green when live, dim amber + slow pulse when stale. */
+.ticker-live-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin: 0 14px;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+}
+.ticker[data-status="stale"] .ticker-live-dot {
+  background: #f59e0b;
+  box-shadow: none;
+  animation: ticker-dot-pulse 1.6s ease-in-out infinite;
+}
+.ticker[data-status="seed"] .ticker-live-dot {
+  background: #64748b;
+  box-shadow: none;
+}
+@keyframes ticker-dot-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Landing sections below the hero
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* shared section typography → migrated to section-ui.tsx (fluid type tokens) */
+
+/* ── Phone mockup (shared) ───────────────────────────────────────────── */
+.phone-wrap {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+}
+.phone-glow {
+  position: absolute;
+  inset: -12% -6%;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse 60% 55% at 50% 45%,
+    rgba(38, 237, 128, 0.28),
+    rgba(38, 237, 128, 0) 70%
+  );
+  filter: blur(20px);
+}
+.phone-img {
+  position: relative;
+  z-index: 1;
+  width: clamp(220px, 26vw, 300px);
+  height: auto;
+  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.6));
+}
+
+/* ── Video block (wrapper migrated to video-block.tsx; phone/device/glow kept) ── */
+.video-phone {
+  position: relative;
+  margin: 48px auto 0;
+  width: fit-content;
+}
+.video-glow {
+  position: absolute;
+  inset: -18% -25%;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse 50% 55% at 50% 50%,
+    rgba(38, 237, 128, 0.22),
+    transparent 70%
+  );
+  filter: blur(40px);
+}
+/* CSS device frame wrapping the 1002x2160 portrait demo video */
+.video-device {
+  position: relative;
+  z-index: 1;
+  width: clamp(260px, 32vw, 340px);
+  aspect-ratio: 1002 / 2160;
+  padding: 10px;
+  border-radius: 44px;
+  background: linear-gradient(160deg, #2a2a2e, #0c0c0e);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06),
+    0 40px 90px -30px rgba(0, 0, 0, 0.9);
+}
+.video-el {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 34px;
+  background: #050505;
+}
+/* Volume toggle — hidden until the phone is hovered/focused; audio off by default. */
+.video-sound {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(8, 12, 22, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(6px) scale(0.96);
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.15s ease,
+    border-color 0.15s ease;
+}
+.video-phone:hover .video-sound,
+.video-sound:focus-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.video-sound:hover {
+  background: rgba(38, 237, 128, 0.18);
+  border-color: rgba(38, 237, 128, 0.55);
+}
+.video-sound[aria-pressed="true"] {
+  color: #26ed80;
+  border-color: rgba(38, 237, 128, 0.45);
+}
+.video-sound:focus-visible {
+  outline: 2px solid #26ed80;
+  outline-offset: 2px;
+}
+/* Touch devices have no hover — keep the control visible there. */
+@media (hover: none) {
+  .video-sound {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Feature zigzag rows → migrated to feature-rows.tsx (Tailwind, fluid tokens) */
+/* Bento section wrapper + head → migrated to bento.tsx; carousel (.cf*) kept */
+
+/* ── Coverflow carousel: big raised center card, smaller dimmed sides ───── */
+.cf {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.cf-stage {
+  position: relative;
+  flex: 1;
+  height: 460px;
+  perspective: 1600px;
+}
+.cf-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* no card box — the phone floats on the dark page with just a glow */
+  padding: 0;
+  /* base = center */
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  z-index: 3;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease,
+    filter 0.5s ease;
+}
+/* side cards: smaller, pushed out + down, dimmed, behind — kept on-screen */
+.cf-card.left {
+  transform: translate(-104%, -44%) scale(0.8);
+  opacity: 0.5;
+  filter: brightness(0.65);
+  z-index: 2;
+  cursor: pointer;
+}
+.cf-card.right {
+  transform: translate(4%, -44%) scale(0.8);
+  opacity: 0.5;
+  filter: brightness(0.65);
+  z-index: 2;
+  cursor: pointer;
+}
+.cf-card.hidden {
+  transform: translate(-50%, -44%) scale(0.6);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+/* soft green glow behind the center phone (no hard box) */
+.cf-card.center .cf-phone::before {
+  content: "";
+  position: absolute;
+  inset: -22% -28%;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 60% 55% at 50% 45%,
+    rgba(38, 237, 128, 0.3),
+    rgba(38, 237, 128, 0) 70%
+  );
+  filter: blur(26px);
+}
+.cf-phone {
+  position: relative;
+  width: 184px;
+}
+.cf-card.left .cf-phone,
+.cf-card.right .cf-phone {
+  width: 172px;
+}
+.cf-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.6));
+}
+.cf-caption {
+  text-align: center;
+  margin-top: 16px;
+}
+.cf-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 6px 0 0;
+}
+/* arrows */
+.cf-arrow {
+  position: relative;
+  z-index: 5;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 12, 18, 0.7);
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.cf-arrow:hover {
+  background: rgba(38, 237, 128, 0.18);
+  border-color: var(--green);
+  transform: scale(1.08);
+}
+.cf-arrow:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+/* dots */
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 28px;
+}
+.carousel-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, width 0.2s ease;
+}
+.carousel-dot:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+.carousel-dot.active {
+  width: 26px;
+  border-radius: 5px;
+  background: var(--green);
+}
+.carousel-dot:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+@media (max-width: 720px) {
+  /* on mobile, hide the side cards — show only the centered card + dots.
+     Pin them to dead-center (no horizontal offset) so their off-screen
+     transform can't extend the document width and cause H-overflow. */
+  .cf-card.left,
+  .cf-card.right {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -44%) scale(0.8);
+  }
+  .cf-stage {
+    height: 600px;
+  }
+  .cf-card {
+    width: 88vw;
+    max-width: 360px;
+  }
+}
+/* belt-and-braces: the carousel viewport never causes horizontal scroll */
+.cf,
+.cf-stage {
+  max-width: 100%;
+}
+
+/* How-it-works → migrated to how-it-works.tsx (Tailwind, fluid tokens) */
+
+/* ── Final CTA glow (kept — radial gradient; rest migrated to final-cta.tsx) ── */
+.final-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse 50% 60% at 50% 20%,
+    rgba(38, 237, 128, 0.07),
+    transparent 70%
+  );
+}
+
+/* Footer → migrated to site-footer.tsx (Tailwind, fluid tokens) */
+
+/* Section responsiveness now lives in the components via Tailwind sm:/md:
+   utilities — the old max-width:860px override block was deleted with the
+   selectors it targeted (stats-band, feature-row, how-grid, final-inner). */
+
+/* ── Reduced motion: stop the firefly is JS-driven, but kill CSS motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-seq,
+  .ticker-live-dot,
+  .btn::before,
+  .btn::after {
+    animation: none !important;
+  }
+  /* No auto-scroll under reduced motion: freeze the marquee and make the viewport
+     a horizontally scrollable row so every token stays reachable. Hide the extra
+     copies so tokens aren't shown 4×. */
+  .ticker-viewport {
+    overflow-x: auto;
+  }
+  .ticker-seq {
+    transform: none !important;
+  }
+  .ticker-seq[aria-hidden="true"] {
+    display: none;
+  }
+  .video-el {
+    /* browsers auto-pause autoplay under reduced-motion in many cases;
+       ensure controls remain available (they do via the controls attr) */
+  }
+}
+
+/* ── Account card inner glow (green, fomo-style breathing) ──
+   A single centered INSET ring that hugs the border from inside. The negative
+   spread pulls the glow back to the perimeter so it traces the edge instead of
+   pooling in the centre; the blur breathes over 2s. Contained — never beyond
+   the border, never floods the middle. */
+/* Neutral white inset edge ring (no colour wash) — a subtle breathing rim that
+   defines the card's edge without tinting it. Green lives only in the text. */
+@keyframes account-glow-pulse {
+  0%,
+  100% {
+    box-shadow: inset 0 0 6px -2px rgba(255, 255, 255, 0.18);
+  }
+  50% {
+    box-shadow: inset 0 0 9px -1px rgba(255, 255, 255, 0.28);
+  }
+}
+.account-glow {
+  animation: account-glow-pulse 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .account-glow {
+    animation: none;
+    box-shadow: inset 0 0 7px -2px rgba(255, 255, 255, 0.18);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Trading terminal (/trade) — treatments Tailwind can't express cleanly.
+   Everything else on the terminal is Tailwind utilities + brand tokens.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Signature CTA — a DARK GLASS pill (like the home-page button), not a solid
+   Buy = soft off-white fill (premium primary CTA); Sell = muted red. The ⚡ bolt
+   carries the green/red accent. Width is set by the component (contained, not
+   full-bleed). */
+.tcta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 15px;
+  border-radius: 100px;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  /* Soft off-white fill (not pure #fff — that's too harsh on black). Dark text;
+     the ⚡ bolt carries the green/red semantic. */
+  color: #0a0f0c;
+  background: #e8eaed;
+  border: 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease;
+}
+.tcta:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #f2f3f5;
+}
+.tcta:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+}
+.tcta:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.tcta:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.tcta .bolt {
+  color: var(--green);
+}
+/* Sell is unmistakably red (a white "Sell" would read as Buy). Softer than a flat
+   slab: a muted red fill, white text, gentle shadow. */
+.tcta--sell {
+  color: #fff;
+  background: #e0483c;
+  box-shadow: 0 2px 10px rgba(243, 65, 52, 0.25);
+}
+.tcta--sell:hover:not(:disabled) {
+  background: #ef5246;
+}
+.tcta--sell .bolt {
+  color: #fff;
+}
+.tcta--sell:focus-visible {
+  outline-color: var(--red);
+}
+
+/* HIDDEN scrollbar for the terminal's scrolling panels — fully scrollable by
+   wheel/trackpad, just no visible bar (the modern premium-app convention: Linear,
+   Vercel, etc.). This is the reliable cross-browser/OS fix; the native bar (and
+   the Linux GTK overlay bar) is suppressed everywhere. */
+.term-scroll {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* old Edge */
+}
+.term-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* Chrome / Safari / new Edge */
+}
+
+/* In fullscreen, the chart card must become an invisible black frame so the
+   TradingView widget fills it edge-to-edge with NO border/rounding/gradient/shadow
+   (those make the ugly frame). !important beats the card's Tailwind utilities. */
+.chart-card:fullscreen {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #000 !important;
+  background-image: none !important; /* kill the top-light gradient */
+  box-shadow: none !important; /* kill the inset hairline */
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* the widget's own wrapper + the lightweight-charts host fill the fullscreen box */
+.chart-card:fullscreen .tradingview-widget-container,
+.chart-card:fullscreen .price-chart {
+  height: 100% !important;
+  width: 100% !important;
+}
