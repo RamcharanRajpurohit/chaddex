@@ -48,8 +48,11 @@ export function TradeTerminal() {
           page: transparent at the top, frosts only on scroll (no forced solid). */}
       <SiteHeader centerSlot={<TokenSearch onSelect={setSelectedMint} />} />
       {/* pt clears the fixed header; a little horizontal + top gap lets the
-          rounded-top panel card breathe so its curved corners are visible. */}
-      <main className="bg-bg px-3 pb-3 pt-[84px] text-white">
+          rounded-top panel card breathe so its curved corners are visible.
+          ≤820px the header wraps the search onto a second row (~102px tall — see
+          globals.css), so the offset grows to clear it; above the wrap boundary
+          the header is a single row again and 84px is enough. */}
+      <main className="bg-bg px-3 pb-3 pt-[108px] text-white min-[821px]:pt-[84px]">
         {/* ape.pro 3-column: trending+detail (left) · chart+activity (middle) ·
             buy/sell+position (right). Rounded-top card meeting the header.
             The middle + right columns take whatever height their content wants
