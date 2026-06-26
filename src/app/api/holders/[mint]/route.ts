@@ -20,7 +20,11 @@ import {
   fetchTopWallets,
   distributionFromWallets,
 } from "@/lib/terminal/holders";
-import { createKeyedFetcher, jsonWithCache } from "@/lib/terminal/route-cache";
+import {
+  createKeyedFetcher,
+  jsonWithCache,
+  resilientList,
+} from "@/lib/terminal/route-cache";
 import type { Distribution, Holder } from "@/lib/terminal/types";
 
 // One keyed (single-flight + last-known-good) fetcher per source. Each isGood
@@ -63,22 +67,6 @@ async function walletsCached(mint: string): Promise<Holder[]> {
   return getWallets(mint);
 }
 
-// Wallets are the one feed that must never be cached EMPTY: a single transient
-// cold-instance failure would otherwise lock an empty holders list in for the
-// whole `expire` window (the bug where some tokens showed 0 holders for ~5min).
-// So: try the cached path first; if it's empty, do ONE uncached live fetch so a
-// poisoned/cold cache entry can't persist. Only the cached path is shared across
-// clients; the fallback is the rare miss.
-async function walletsResilient(mint: string): Promise<Holder[]> {
-  const cached = await walletsCached(mint);
-  if (cached.length > 0) return cached;
-  try {
-    return await getWallets(mint); // uncached, with its own retry inside
-  } catch {
-    return [];
-  }
-}
-
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ mint: string }> },
@@ -87,7 +75,12 @@ export async function GET(
   const [count, geckoDist, topWallets] = await Promise.all([
     countCached(mint),
     geckoDistCached(mint),
-    walletsResilient(mint),
+    // Never let a transient empty wallet list stick for the cache window.
+    resilientList(
+      () => walletsCached(mint),
+      () => getWallets(mint),
+      (v) => v.length === 0,
+    ),
   ]);
   // Prefer Gecko's 4-band breakdown; fall back to the wallet-derived 3-band one.
   const distribution = geckoDist ?? distributionFromWallets(topWallets);

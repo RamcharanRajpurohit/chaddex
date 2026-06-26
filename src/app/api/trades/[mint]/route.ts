@@ -7,7 +7,11 @@
 import { cacheLife } from "next/cache";
 import { fetchTrades } from "@/lib/terminal/gecko";
 import { getPoolCached } from "@/lib/terminal/pool-cache";
-import { createKeyedFetcher, jsonWithCache } from "@/lib/terminal/route-cache";
+import {
+  createKeyedFetcher,
+  jsonWithCache,
+  resilientList,
+} from "@/lib/terminal/route-cache";
 import type { Trade } from "@/lib/terminal/types";
 
 const get = createKeyedFetcher<Trade[]>({
@@ -32,6 +36,10 @@ export async function GET(
   if (!pool) {
     return jsonWithCache({ pool: null, trades: [], rateLimited }, 15, 30);
   }
-  const trades = await getCached(pool);
+  const trades = await resilientList(
+    () => getCached(pool),
+    () => get(pool),
+    (v) => v.length === 0,
+  );
   return jsonWithCache({ pool, trades }, 15, 30);
 }

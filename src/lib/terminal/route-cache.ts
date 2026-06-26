@@ -67,6 +67,31 @@ export function createKeyedFetcher<T>(opts: KeyedOpts<T>) {
   };
 }
 
+/** Guard against `"use cache"` locking in a TRANSIENT empty result for the whole
+ *  `expire` window (the bug where a single cold-instance/RPC hiccup made a token
+ *  show an empty chart / holders / trades for ~5 min). Pattern: read the cached
+ *  value; if it's empty, do ONE uncached live fetch so a poisoned/cold cache
+ *  entry can't persist. Only the cached path is shared across clients — the
+ *  uncached fallback is the rare miss. Use for every list feed whose empty state
+ *  must never stick (ohlcv, trades, holders).
+ *
+ *  @param cached   the `"use cache"`-wrapped getter (shared, may return empty)
+ *  @param live     the same getter WITHOUT the cache wrapper (fresh fetch)
+ *  @param isEmpty  what counts as an empty/poisoned result to retry past */
+export async function resilientList<T>(
+  cached: () => Promise<T>,
+  live: () => Promise<T>,
+  isEmpty: (v: T) => boolean,
+): Promise<T> {
+  const value = await cached();
+  if (!isEmpty(value)) return value;
+  try {
+    return await live();
+  } catch {
+    return value;
+  }
+}
+
 /** Standard JSON response with a CDN hint matching the cache layer. */
 export function jsonWithCache(body: unknown, sMaxAge: number, swr: number): Response {
   return Response.json(body, {

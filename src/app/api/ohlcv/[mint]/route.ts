@@ -14,7 +14,11 @@
 import { cacheLife } from "next/cache";
 import { fetchOhlcv, isTimeframe, type Timeframe } from "@/lib/terminal/gecko";
 import { getPoolCached } from "@/lib/terminal/pool-cache";
-import { createKeyedFetcher, jsonWithCache } from "@/lib/terminal/route-cache";
+import {
+  createKeyedFetcher,
+  jsonWithCache,
+  resilientList,
+} from "@/lib/terminal/route-cache";
 import type { Candle } from "@/lib/terminal/types";
 
 // OHLCV: keyed by "pool|tf".
@@ -48,6 +52,11 @@ export async function GET(
     // rate-limited us (chart "retrying…"). `rateLimited` lets the UI say which.
     return jsonWithCache({ pool: null, candles: [], rateLimited }, 30, 60);
   }
-  const candles = await getCandlesCached(pool, tf);
+  // Never let a transient empty stick for the whole cache window (see resilientList).
+  const candles = await resilientList(
+    () => getCandlesCached(pool, tf),
+    () => getCandles(`${pool}|${tf}`),
+    (v) => v.length === 0,
+  );
   return jsonWithCache({ pool, candles, timeframe: tf }, 30, 60);
 }
