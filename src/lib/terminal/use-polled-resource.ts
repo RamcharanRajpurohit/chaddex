@@ -8,8 +8,12 @@ import { useEffect, useRef, useState } from "react";
 //
 //   • AbortController per request; aborted on key change AND on unmount.
 //   • inFlight guard → no overlapping fetches for the same key.
-//   • visibility/focus aware → stop polling when the tab is hidden; refetch on
-//     focus. (Saves upstream calls; matches the banner.)
+//   • visibility aware → stop polling when the tab is hidden, resume (with one
+//     immediate fetch) when it becomes visible again. We deliberately do NOT
+//     refetch on every window `focus`: with many pollers mounted that fired a
+//     full fan-out of fetches on every trivial refocus (e.g. clicking the search
+//     input), regardless of how fresh the data already was — a flood, not a
+//     refresh. The interval + visibility resume already keep data current.
 //   • THE STALE-KEY RACE GUARD (the adversarial finding): every result is STAMPED
 //     with the key it was fetched for. The hook returns data ONLY when its stamp
 //     matches the current key — so selecting token B while A is in flight can
@@ -128,11 +132,9 @@ export function usePolledResource<T>(opts: {
       timer = null;
     };
     const onVisibility = () => (document.hidden ? stop() : start());
-    const onFocus = () => void fetchOnce();
 
     if (!document.hidden) start();
     document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("focus", onFocus);
 
     return () => {
       cancelled = true;
@@ -149,7 +151,6 @@ export function usePolledResource<T>(opts: {
       // CDN-cached and the stamp guard ignores any late result.)
       inFlight.current = false;
       document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("focus", onFocus);
     };
     // computedUrl encodes key; the rest are scalars. url/parse are via refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps

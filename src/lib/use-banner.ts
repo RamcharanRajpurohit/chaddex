@@ -17,7 +17,10 @@ import { isFiniteNumber, isNonEmptyString, type Token } from "./quotes/types";
 //   - `status` is the only React state; it lives on the <nav> wrapper (outside the
 //     animated copies), so updating it can't restart the marquee.
 
-const REFRESH_MS = 12_000;
+// Poll cadence for the cached /api/banner route. Its cacheLife revalidate is 30s,
+// so polling faster just re-reads the same payload — 30s matches the refresh and
+// avoids the redundant calls the old 12s made.
+const REFRESH_MS = 30_000;
 
 export type BannerStatus = "seed" | "live" | "stale";
 
@@ -114,17 +117,14 @@ export function useBanner(): BannerState {
       timer = null;
     };
     const onVisibility = () => (document.hidden ? stop() : start());
-    const onFocus = () => void fetchOnce();
 
     if (!document.hidden) start();
     document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("focus", onFocus);
     const ac = abortRef;
     return () => {
       stop();
       ac.current?.abort();
       document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("focus", onFocus);
     };
   }, [fetchOnce]);
 
