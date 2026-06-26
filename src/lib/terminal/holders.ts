@@ -36,17 +36,23 @@ export async function fetchGeckoDistribution(
   return distribution;
 }
 
-/** Top-20 token accounts with each one's share of supply, via Alchemy. Returns
- *  [] without a key or on RPC failure — wallets are genuinely optional. */
+/** Top-20 token accounts with each one's share of supply, via Alchemy.
+ *  THROWS without a key or on RPC failure — the caller (createKeyedFetcher)
+ *  turns a throw into last-known-good, and the route only caches NON-empty
+ *  results, so a transient cold-instance hiccup can't poison the cache with [].
+ *  Retries once: on Vercel, the first RPC call on a cold serverless instance
+ *  occasionally times out; a single retry clears it. */
 export async function fetchTopWallets(
   mint: string,
   signal?: AbortSignal,
 ): Promise<Holder[]> {
   const url = process.env.ALCHEMY_RPC_URL;
-  if (!url) return [];
-  try {
-    const rpc = createSolanaRpc(url);
-    const mintAddress = address(mint);
+  if (!url) throw new Error("ALCHEMY_RPC_URL is not set");
+
+  const rpc = createSolanaRpc(url);
+  const mintAddress = address(mint);
+
+  const attempt = async (): Promise<Holder[]> => {
     const [largest, supply] = await Promise.all([
       rpc.getTokenLargestAccounts(mintAddress).send({ abortSignal: signal }),
       rpc.getTokenSupply(mintAddress).send({ abortSignal: signal }),
@@ -60,9 +66,13 @@ export async function fetchTopWallets(
           ? Number((BigInt(acct.amount) * 1_000_000n) / supplyUnits) / 10_000
           : undefined,
     }));
-  } catch (err) {
-    console.error(`[holders] Alchemy top-wallets failed for ${mint}:`, err);
-    return [];
+  };
+
+  try {
+    return await attempt();
+  } catch {
+    // One retry for the transient cold-instance / RPC-hiccup case.
+    return attempt();
   }
 }
 
