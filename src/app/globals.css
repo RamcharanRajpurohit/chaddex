@@ -5,24 +5,35 @@
    every Tailwind token below (and every component) re-skins. To re-theme the
    whole site, edit only this block. */
 :root {
-  --green: #26ed80; /* primary CTA green */
+  --green: #26ed80; /* primary CTA / Buy green — ChadWallet brand (kept, not fomo's) */
+  /* CTA colour-ramp arc colour (rgb triplet, see .btn). Default = brand green; a
+     section can override --btn-arc to re-skin only its own pills (the hero does,
+     to the deeper fomo green). Set on :root — NOT on .btn — so the section
+     override can cascade in (a value on .btn itself would beat inheritance). */
+  --btn-arc: 38, 237, 128; /* #26ed80 */
   --sol: #14f195; /* Solana green accent */
   --lime: #ccff00; /* marketing-site accent (ticker flavour only) */
-  --red: #f34134; /* loss / sell red */
-  --muted: #9aa3b2; /* secondary text */
-  --dim: #6b7280; /* tertiary / greyed text */
-  --bg: #000; /* page background — BLACK, like the home page */
-  --surface: rgba(255, 255, 255, 0.02); /* card surface */
-  --surface-2: rgba(255, 255, 255, 0.05); /* raised surface / hover */
-  /* Terminal cards use the HOME-PAGE glass treatment (account-card look): a faint
-     white wash over black with a white hairline border — NOT a navy fill. */
-  --card: rgba(255, 255, 255, 0.03); /* glass card surface over black */
-  --card-2: rgba(255, 255, 255, 0.06); /* raised glass / hover */
+  --red: #f34134; /* loss / sell red — ChadWallet brand */
+  /* fomo's text greys (sampled live from fomo.family): primary off-white, then
+     two cooler greys for secondary/tertiary copy. NOT pure white/grey. */
+  --text: #f7f7f7; /* rgb(247,247,247) — primary text */
+  --muted: #9899a3; /* rgb(152,153,163) — secondary text */
+  --dim: #474b52; /* rgb(71,75,82) — tertiary / greyed text */
+  /* fomo's page background: a deep near-black navy (rgb(6,5,16)), NOT pure black.
+     This single change re-skins the whole app (terminal + landing) to fomo's
+     base — every surface sits on this. */
+  --bg: #060510; /* rgb(6,5,16) — fomo page background */
+  --surface: rgba(255, 255, 255, 0.02); /* faint wash */
+  --surface-2: rgba(255, 255, 255, 0.05); /* raised wash / hover */
+  /* fomo's card surface is a solid raised navy (rgb(18,17,26)) with a faint cool
+     hairline (rgba(203,208,235,0.1)) — a real filled cell, not a glass wash. */
+  --card: #12111a; /* rgb(18,17,26) — fomo card / stat-cell surface */
+  --card-2: #161522; /* rgb(22,21,34) — fomo raised card / hover */
   /* Cool accent from the "Download App" ghost button (blue/white ramp). Used for
      neutral-interactive accents so green stays reserved for gains/buy semantics. */
   --blue: #78b4ff; /* rgba(120,180,255) */
-  --border: rgba(255, 255, 255, 0.08); /* hairline borders */
-  --border-strong: rgba(255, 255, 255, 0.16); /* visible borders */
+  --border: rgba(203, 208, 235, 0.1); /* fomo hairline border */
+  --border-strong: rgba(203, 208, 235, 0.2); /* visible border */
   --on-green: #04130b; /* text that sits on a green fill */
 }
 
@@ -36,6 +47,7 @@
   --color-sol: var(--sol);
   --color-lime: var(--lime);
   --color-red: var(--red);
+  --color-text: var(--text);
   --color-muted: var(--muted);
   --color-dim: var(--dim);
   --color-bg: var(--bg);
@@ -96,15 +108,21 @@
 
 body {
   background: var(--bg);
-  color: #fff;
+  color: var(--text);
   font-family: var(--font-inter), "Inter", system-ui, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  /* Hide the main window scrollbar everywhere (home + terminal) — page still
-     scrolls by wheel/trackpad. Modern-app convention; matches .term-scroll. */
+}
+/* Hide the main window scrollbar everywhere (home + terminal) — page still
+   scrolls by wheel/trackpad. Modern-app convention; matches .term-scroll. The
+   document scroll can live on EITHER html or body (body's overflow-x:hidden
+   pushes it to html), so hide the bar on both. */
+html,
+body {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* old Edge */
 }
+html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   width: 0;
   height: 0;
@@ -137,13 +155,12 @@ html {
   -webkit-backdrop-filter: blur(16px) saturate(130%);
   border-bottom: 1px solid var(--border);
 }
-/* Terminal header: stays transparent like home, but ALWAYS keeps a visible bottom
-   hairline so the 3-column vertical separators have a horizontal line to meet
-   (without it they run up into nothing and look unfinished). Uses a STRONGER
-   border than --border (0.08, near-invisible on the dark header) so it actually
-   reads — !important to win over the base rule's transparent border-bottom. */
+/* Terminal header: transparent like home, no bottom border (the rounded card
+   sits just below with its own frame). Tighter vertical padding — the trading
+   surface wants every pixel of height and the header sits flush above the card. */
 .site-header.site-header--terminal {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 /* skip link — first focusable, off-screen until focused (WCAG 2.4.1) */
 .skip-link {
@@ -345,17 +362,28 @@ html {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: rgba(0, 0, 0, 0.55);
+  /* The hero base is already the page's #060510 navy; the fireflies are dim, so
+     no heavy darkening is needed. A faint wash only (keeps the big white copy
+     crisp) that fades out over the last ~22% so the hero blends seamlessly into
+     the same navy in the section below — hero and trade page read as one shade. */
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.05) 0%,
+    rgba(0, 0, 0, 0.05) 82%,
+    rgba(0, 0, 0, 0) 100%
+  );
 }
 .vignette {
   position: absolute;
   inset: 0;
   z-index: 1;
+  /* Barely-there center focus. Kept minimal so the hero sits at the navy
+     #060510 (not crushed to black) — it must match the trade page background. */
   background: radial-gradient(
-    ellipse 75% 55% at 50% 45%,
-    rgba(0, 0, 0, 0.92) 0%,
-    rgba(0, 0, 0, 0.35) 70%,
-    rgba(0, 0, 0, 0.55) 100%
+    ellipse 80% 60% at 50% 45%,
+    rgba(0, 0, 0, 0.08) 0%,
+    rgba(0, 0, 0, 0.04) 70%,
+    rgba(0, 0, 0, 0) 100%
   );
 }
 /* hero logo/eyebrow/h1/sub → migrated to Tailwind in hero.tsx.
@@ -406,24 +434,24 @@ html {
 .btn::before {
   background: conic-gradient(
     from 0deg,
-    rgba(38, 237, 128, 0) 0deg,
-    rgba(38, 237, 128, 0.5) 18deg,
+    rgba(var(--btn-arc), 0) 0deg,
+    rgba(var(--btn-arc), 0.5) 18deg,
     rgba(255, 255, 255, 1) 40deg,
-    rgba(38, 237, 128, 0.5) 62deg,
-    rgba(38, 237, 128, 0) 110deg,
-    rgba(38, 237, 128, 0) 360deg
+    rgba(var(--btn-arc), 0.5) 62deg,
+    rgba(var(--btn-arc), 0) 110deg,
+    rgba(var(--btn-arc), 0) 360deg
   );
   animation: spinCW 10s linear infinite;
 }
 .btn::after {
   background: conic-gradient(
     from 0deg,
-    rgba(38, 237, 128, 0) 0deg,
-    rgba(38, 237, 128, 0) 250deg,
-    rgba(38, 237, 128, 0.5) 298deg,
+    rgba(var(--btn-arc), 0) 0deg,
+    rgba(var(--btn-arc), 0) 250deg,
+    rgba(var(--btn-arc), 0.5) 298deg,
     rgba(255, 255, 255, 1) 320deg,
-    rgba(38, 237, 128, 0.5) 342deg,
-    rgba(38, 237, 128, 0) 360deg
+    rgba(var(--btn-arc), 0.5) 342deg,
+    rgba(var(--btn-arc), 0) 360deg
   );
   animation: spinCCW 10s linear infinite;
 }
@@ -659,6 +687,78 @@ html {
    ───────────────────────────────────────────────────────────────────────── */
 
 /* shared section typography → migrated to section-ui.tsx (fluid type tokens) */
+
+/* ── Terminal showcase: desktop screen on a stand + overlapping phone (fomo's
+   "trade from anywhere" cross-device cluster) ───────────────────────────── */
+.device-cluster {
+  position: relative;
+  margin: clamp(2.5rem, 6vw, 4.5rem) auto 0;
+  width: 100%;
+  max-width: 62rem;
+  /* room for the phone hanging off the bottom-right */
+  padding-bottom: clamp(2rem, 6vw, 4rem);
+}
+.device-desktop {
+  position: relative;
+  width: 100%;
+}
+.device-desktop-screen {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 16px;
+  padding: 10px;
+  background: linear-gradient(160deg, #23232a, #0b0b0f);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 50px 110px -30px rgba(0, 0, 0, 0.85),
+    0 0 90px -20px rgba(38, 237, 128, 0.15);
+}
+.device-desktop-screen :is(img) {
+  border-radius: 8px;
+}
+/* monitor stand: a neck + foot below the screen, centered */
+.device-desktop-stand {
+  position: absolute;
+  left: 50%;
+  bottom: -22px;
+  width: 90px;
+  height: 26px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #1a1a20, #101014);
+  border-radius: 0 0 6px 6px;
+}
+.device-desktop-foot {
+  position: absolute;
+  left: 50%;
+  bottom: -30px;
+  width: 220px;
+  height: 12px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #1c1c22, #0c0c10);
+  border-radius: 999px;
+  box-shadow: 0 16px 30px -10px rgba(0, 0, 0, 0.8);
+}
+/* phone overlapping the desktop's lower-right corner */
+.device-phone {
+  position: absolute;
+  right: clamp(-0.5rem, 2vw, 1.5rem);
+  bottom: 0;
+  z-index: 2;
+  width: clamp(110px, 16vw, 170px);
+  aspect-ratio: 320 / 650;
+  padding: 6px;
+  border-radius: calc(1.6rem + 6px);
+  background: linear-gradient(160deg, #2a2a30, #0c0c10);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 30px 60px -20px rgba(0, 0, 0, 0.9);
+}
+@media (max-width: 640px) {
+  /* on phones, drop the overlapping phone (it crowds the small screen) */
+  .device-phone {
+    display: none;
+  }
+}
 
 /* ── Phone mockup (shared) ───────────────────────────────────────────── */
 .phone-wrap {
@@ -944,6 +1044,71 @@ html {
 
 /* How-it-works → migrated to how-it-works.tsx (Tailwind, fluid tokens) */
 
+/* ── Orbit CTA: avatars orbiting a centered headline (fomo's closing section,
+   skinned green not purple) ───────────────────────────────────────────────── */
+.orbit-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse 55% 60% at 50% 50%,
+    rgba(38, 237, 128, 0.16),
+    rgba(38, 237, 128, 0) 65%
+  );
+}
+.orbit-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+}
+/* the ring is a square box; avatars are absolutely placed on its circle via a
+   per-index rotation + outward translate by the ring RADIUS (half the box). The
+   whole ring rotates slowly. --r is the ring radius, reused by the avatars. */
+.orbit-ring {
+  --ring: min(40rem, 82vw);
+  --r: calc(var(--ring) / 2);
+  position: relative;
+  width: var(--ring);
+  height: var(--ring);
+  animation: orbit-spin 60s linear infinite;
+}
+.orbit-avatar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(40px, 5vw, 64px);
+  aspect-ratio: 1;
+  margin: calc(clamp(40px, 5vw, 64px) / -2);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  /* place on the circle: rotate by the avatar's slice, push out by the radius,
+     then counter-rotate so the image stays upright as the ring turns */
+  transform: rotate(calc(var(--i) * (360deg / var(--n)))) translateY(calc(var(--r) * -1))
+    rotate(calc(var(--i) * (-360deg / var(--n))));
+}
+/* each avatar counter-spins the ring's rotation so faces never go upside-down */
+.orbit-avatar > img {
+  animation: orbit-spin 60s linear infinite reverse;
+}
+@keyframes orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit-ring,
+  .orbit-avatar > img {
+    animation: none;
+  }
+}
+
 /* ── Final CTA glow (kept — radial gradient; rest migrated to final-cta.tsx) ── */
 .final-glow {
   position: absolute;
@@ -1019,32 +1184,30 @@ html {
    Everything else on the terminal is Tailwind utilities + brand tokens.
    ───────────────────────────────────────────────────────────────────────── */
 
-/* Signature CTA — a DARK GLASS pill (like the home-page button), not a solid
-   Buy = soft off-white fill (premium primary CTA); Sell = muted red. The ⚡ bolt
-   carries the green/red accent. Width is set by the component (contained, not
-   full-bleed). */
+/* Signature CTA — fomo's full-width primary action: a SOLID semantic fill (Buy =
+   ChadWallet green, Sell = red) with dark high-contrast text and the ⚡ bolt.
+   Radius 12px to match fomo's button family (its cards/buttons use 8–12px, not
+   pills). Width is set by the component (full-bleed in the panel). */
 .tcta {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  padding: 15px;
-  border-radius: 100px;
+  padding: 12px;
+  border-radius: 12px;
   font-weight: 800;
   font-size: 16px;
   cursor: pointer;
-  /* Soft off-white fill (not pure #fff — that's too harsh on black). Dark text;
-     the ⚡ bolt carries the green/red semantic. */
-  color: #0a0f0c;
-  background: #e8eaed;
+  color: var(--on-green);
+  background: var(--green);
   border: 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 14px rgba(38, 237, 128, 0.18);
   transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease;
 }
 .tcta:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: #f2f3f5;
+  filter: brightness(1.06);
 }
 .tcta:active:not(:disabled) {
   transform: translateY(0) scale(0.99);
@@ -1054,21 +1217,32 @@ html {
   cursor: not-allowed;
 }
 .tcta:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--green);
   outline-offset: 2px;
 }
 .tcta .bolt {
-  color: var(--green);
+  color: var(--on-green);
 }
-/* Sell is unmistakably red (a white "Sell" would read as Buy). Softer than a flat
-   slab: a muted red fill, white text, gentle shadow. */
+/* idle (no amount yet) — fomo's dark CTA before you type an amount. */
+.tcta--idle {
+  color: var(--muted);
+  background: var(--card);
+  box-shadow: none;
+  border: 0.8px solid var(--border);
+}
+.tcta--idle:hover:not(:disabled) {
+  filter: none;
+  background: var(--card-2);
+  color: #fff;
+}
+.tcta--idle .bolt {
+  color: var(--muted);
+}
+/* Sell = solid red fill, white text. */
 .tcta--sell {
   color: #fff;
-  background: #e0483c;
-  box-shadow: 0 2px 10px rgba(243, 65, 52, 0.25);
-}
-.tcta--sell:hover:not(:disabled) {
-  background: #ef5246;
+  background: var(--red);
+  box-shadow: 0 2px 14px rgba(243, 65, 52, 0.22);
 }
 .tcta--sell .bolt {
   color: #fff;

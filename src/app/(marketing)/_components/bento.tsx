@@ -2,19 +2,24 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { BENTO } from "../_lib/features";
+import { BENTO_GRID } from "../_lib/features";
 import { Eyebrow, SectionTitle } from "./section-ui";
 
 // Coverflow carousel: the center card is large and raised; the previous/next
 // cards sit smaller, lower, and dimmed on the sides. Auto-advances sideways.
 // Pauses on hover/focus, respects prefers-reduced-motion.
+//
+// This is the ONE feature section now — it carries the full set of app-feature
+// slides (what used to be a static 6-card grid) so everything lives in the
+// carousel itself, no separate cards.
+//
 // 5s = lower bound of the accessibility-recommended 5–7s per slide (WCAG/NN/g).
-// Slides are short (label + title), and we have pause-on-hover + arrows + dots.
+// Slides are short (eyebrow + title), and we have pause-on-hover + arrows + dots.
 const INTERVAL = 5000;
 
 export default function Bento() {
   const [active, setActive] = useState(0);
-  const n = BENTO.length;
+  const n = BENTO_GRID.length;
   // pause held in a ref so hover toggling never restarts the timer (the old
   // state-based effect re-armed the interval constantly → erratic/stalled).
   const paused = useRef(false);
@@ -59,7 +64,7 @@ export default function Bento() {
         </button>
 
         <div className="cf-stage">
-          {BENTO.map((f, idx) => {
+          {BENTO_GRID.map((f, idx) => {
             const d = offset(idx);
             const pos = d === 0 ? "center" : d === -1 ? "left" : d === 1 ? "right" : "hidden";
             return (
@@ -80,7 +85,7 @@ export default function Bento() {
                 </div>
                 <div className="cf-caption">
                   <span className="inline-block text-eyebrow font-bold uppercase tracking-[0.1em] text-green">
-                    {f.label}
+                    {f.eyebrow}
                   </span>
                   <h3 className="cf-title">{f.title}</h3>
                 </div>
@@ -95,11 +100,11 @@ export default function Bento() {
       </div>
 
       <div className="carousel-dots" role="tablist" aria-label="Choose feature">
-        {BENTO.map((f, idx) => (
+        {BENTO_GRID.map((f, idx) => (
           <button
             key={f.img}
             className={`carousel-dot ${idx === active ? "active" : ""}`}
-            aria-label={`Show ${f.label}`}
+            aria-label={`Show ${f.eyebrow}`}
             aria-selected={idx === active}
             role="tab"
             onClick={() => go(idx)}

@@ -26,6 +26,9 @@ export type Token = {
   direction: "up" | "down";
   /** Holder count, when available (Jupiter v2 provides it). */
   holderCount?: number;
+  /** Market cap in USD, when available (Jupiter v2 `mcap`). The trending rail
+   *  leads with this (fomo shows "$XM MC" per row, not the raw price). */
+  marketCap?: number;
 };
 
 /** True for a finite, real number (rejects NaN, Infinity, non-numbers). */

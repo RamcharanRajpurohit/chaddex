@@ -5,6 +5,11 @@ import { useEffect, useRef } from "react";
 // A field of dim green fireflies (jugnu) drifting over the dark, each softly
 // twinkling. Ambient, premium, on-brand green. Loops forever, no deps.
 // Ported from chadwallet-hero.html — runs only on the client (canvas + rAF).
+//
+// Glow = the brand green #26ed80 (same accent the Trade page / Buy button use),
+// so the hero matches the product's theme.
+const GLOW = "38,237,128"; // #26ed80
+
 export default function FireflyScene() {
   const ref = useRef<HTMLCanvasElement>(null);
 
@@ -65,9 +70,9 @@ export default function FireflyScene() {
 
         // soft radial glow
         const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, rad * 4);
-        g.addColorStop(0, `rgba(38,237,128,${a * 0.9})`);
-        g.addColorStop(0.4, `rgba(38,237,128,${a * 0.25})`);
-        g.addColorStop(1, "rgba(38,237,128,0)");
+        g.addColorStop(0, `rgba(${GLOW},${a * 0.9})`);
+        g.addColorStop(0.4, `rgba(${GLOW},${a * 0.25})`);
+        g.addColorStop(1, `rgba(${GLOW},0)`);
         ctx.fillStyle = g;
         ctx.beginPath();
         ctx.arc(f.x, f.y, rad * 4, 0, 7);

@@ -45,31 +45,37 @@ export function TradingViewWidget({ symbol }: { symbol: string }) {
       style: "1", // candles
       locale: "en",
       autosize: true,
-      withdateranges: true,
+      withdateranges: true, // bottom 1D/1W/1M/3M/1Y date-range tabs (fomo)
       allow_symbol_change: true,
-      hide_side_toolbar: false, // drawing tools ON
-      details: false,
+      hide_side_toolbar: false, // left drawing-tools toolbar ON (fomo shows it)
+      hide_top_toolbar: false, // top toolbar: timeframe, ƒx Indicators, undo/redo
+      hide_legend: false, // the O/H/L/C + Volume legend line across the top (fomo)
+      hide_volume: false, // keep the Volume legend row
+      details: true, // symbol details — fomo's default (chaddex was suppressing it)
+      save_image: true, // camera/snapshot button in the top toolbar
+      studies: [], // no preloaded indicators; the ƒx Indicators button stays
       hotlist: false,
-      calendar: false,
-      backgroundColor: "#000000",
+      // fomo's deep navy chart surface (rgb(6,5,16)), not pure black, so the
+      // widget blends with the rest of the re-skinned terminal.
+      backgroundColor: "#060510",
       gridColor: "rgba(255,255,255,0.05)",
       overrides: {
-        // chart surface → our black
-        "paneProperties.background": "#000000",
+        // chart surface → fomo navy
+        "paneProperties.background": "#060510",
         "paneProperties.backgroundType": "solid",
         "paneProperties.vertGridProperties.color": "rgba(255,255,255,0.04)",
         "paneProperties.horzGridProperties.color": "rgba(255,255,255,0.04)",
         "scalesProperties.textColor": "#8b94a6",
         "scalesProperties.lineColor": "rgba(255,255,255,0.08)",
-        // candles → our green / red
-        "mainSeriesProperties.candleStyle.upColor": "#26ed80",
-        "mainSeriesProperties.candleStyle.downColor": "#f0556d",
-        "mainSeriesProperties.candleStyle.borderUpColor": "#26ed80",
-        "mainSeriesProperties.candleStyle.borderDownColor": "#f0556d",
-        "mainSeriesProperties.candleStyle.wickUpColor": "rgba(38,237,128,0.7)",
-        "mainSeriesProperties.candleStyle.wickDownColor": "rgba(240,85,109,0.7)",
+        // candles → fomo green / orange-red (sampled live from fomo.family)
+        "mainSeriesProperties.candleStyle.upColor": "#21c95e",
+        "mainSeriesProperties.candleStyle.downColor": "#ff622e",
+        "mainSeriesProperties.candleStyle.borderUpColor": "#21c95e",
+        "mainSeriesProperties.candleStyle.borderDownColor": "#ff622e",
+        "mainSeriesProperties.candleStyle.wickUpColor": "rgba(33,201,94,0.7)",
+        "mainSeriesProperties.candleStyle.wickDownColor": "rgba(255,98,46,0.7)",
       },
-      loading_screen: { backgroundColor: "#000000", foregroundColor: "#26ed80" },
+      loading_screen: { backgroundColor: "#060510", foregroundColor: "#26ed80" },
       support_host: "https://www.tradingview.com",
     });
     container.appendChild(script);

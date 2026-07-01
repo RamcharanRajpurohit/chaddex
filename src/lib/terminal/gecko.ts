@@ -17,6 +17,7 @@ import {
   type Candle,
   type Trade,
   type Distribution,
+  type Developer,
   isFiniteNumber,
   isNonEmptyString,
   asNumber,
@@ -25,6 +26,12 @@ import {
 export type GeckoHolders = {
   count?: number;
   distribution?: Distribution;
+  /** The token's developer/creator wallet + its supply share, when Gecko knows
+   *  it. A keyless concentration signal that works for every indexed token. */
+  developer?: Developer;
+  /** The token's prose description (Gecko `/info` `description`), for the "About"
+   *  card. Absent when Gecko has none. */
+  description?: string;
 };
 
 /** A token's liquidity pool, with the fields needed to build a TradingView pool
@@ -245,16 +252,18 @@ export async function fetchGeckoHolders(
 ): Promise<GeckoHolders> {
   const url = `${BASE}/tokens/${encodeURIComponent(mint)}/info`;
   const json = await getJson(url, signal);
-  const h = (
-    json as { data?: { attributes?: { holders?: unknown } } }
-  )?.data?.attributes?.holders as
+  // `holders`, `developer_address`, and `developer_holding_percentage` are all
+  // siblings on `data.attributes` (verified live against Gecko's /info payload).
+  const attrs = (json as { data?: { attributes?: Record<string, unknown> } })
+    ?.data?.attributes;
+  const h = attrs?.holders as
     | { count?: unknown; distribution_percentage?: Record<string, unknown> }
     | undefined;
-  if (!h || typeof h !== "object") return {};
+  if (!attrs || !h || typeof h !== "object") return {};
 
   // Require ALL four bands to be real numbers; a partial payload would otherwise
   // render a silently-wrong 0% bar. If any band is missing, treat the whole
-  // distribution as absent (the caller falls back to the wallet-derived one).
+  // distribution as absent.
   const d = h.distribution_percentage;
   const top10 = asNumber(d?.top_10);
   const next10 = asNumber(d?.["11_20"]);
@@ -265,7 +274,18 @@ export async function fetchGeckoHolders(
       ? { top10, next10, next20, rest }
       : undefined;
 
-  return { count: asNumber(h.count), distribution };
+  // Developer wallet: keep only when the address is a real string; the pct is
+  // optional (Gecko sometimes reports 0 or omits it).
+  const devAddr = attrs.developer_address;
+  const developer: Developer | undefined = isNonEmptyString(devAddr)
+    ? { address: devAddr, pct: asNumber(attrs.developer_holding_percentage) }
+    : undefined;
+
+  const description = isNonEmptyString(attrs.description)
+    ? attrs.description.trim()
+    : undefined;
+
+  return { count: asNumber(h.count), distribution, developer, description };
 }
 
 /**

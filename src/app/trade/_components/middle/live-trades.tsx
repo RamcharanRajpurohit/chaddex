@@ -35,15 +35,17 @@ export function LiveTrades({
   }
 
   return (
-    <div className="flex size-full flex-col">
-      <div className="grid flex-none grid-cols-[auto_auto_1fr_1fr_auto] items-center gap-x-3 border-b border-border px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.05em] text-dim">
+    <div className="flex flex-col">
+      {/* Header sticks to the top of the shared activity scroll region while the
+          rows scroll under it. */}
+      <div className="sticky top-0 z-10 grid grid-cols-[auto_auto_1fr_1fr_auto] items-center gap-x-3 border-b border-border bg-bg px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.05em] text-dim">
         <span>Time</span>
         <span>Type</span>
         <span className="text-right">Price</span>
         <span className="text-right">Value</span>
         <span className="text-right">Trader</span>
       </div>
-      <ul className="term-scroll min-h-0 flex-1 overflow-y-auto">
+      <ul>
         {trades.map((t) => (
           <li
             key={t.id}
@@ -76,7 +78,7 @@ export function LiveTrades({
 
 function FeedNote({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid size-full place-items-center p-6 text-center text-[13px] text-muted">
+    <div className="grid min-h-[160px] place-items-center p-6 text-center text-[13px] text-muted">
       {children}
     </div>
   );

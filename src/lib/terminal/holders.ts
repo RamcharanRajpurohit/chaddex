@@ -1,19 +1,21 @@
-// Holder data sources — each INDEPENDENT and PURE (no merging, no fallback
-// patches here). The route fetches these separately, caches each on its own
-// success, and merges. So a transient failure of one source can never poison
-// another (the cache-poisoning bug this replaces).
+// Holder data sources — each INDEPENDENT and PURE (no merging here); the route
+// caches each on its own success, so a transient failure of one can never poison
+// another.
 //
-//   • count        → Jupiter (holderCount) — every token has it.
-//   • Gecko bands  → GeckoTerminal /info (4-band: top10/11-20/21-40/rest); often
-//                    absent for brand-new tokens (Gecko hasn't indexed them).
-//   • top wallets  → Alchemy getTokenLargestAccounts (needs ALCHEMY_RPC_URL).
-//   • distribution from wallets → computed from the top-20 wallet %s, so a fresh
-//                    token Gecko hasn't indexed STILL shows an accurate breakdown.
+//   • count        → Jupiter (holderCount), via the shared token-detail cache.
+//   • Gecko /info  → 4-band distribution (top10/11-20/21-40/rest) + the token's
+//                    developer wallet & its supply share. Often absent for
+//                    brand-new tokens (Gecko hasn't indexed them yet).
+//   • top wallets  → Alchemy `getTokenLargestAccounts` (top-20 accounts + each
+//                    one's supply share). Needs ALCHEMY_RPC_URL. Verified live:
+//                    HTTP 200, 20 wallets, ~7.6s with our key — NOT the "hangs on
+//                    the free tier" the old comment claimed. The public RPC 429s
+//                    instantly, which is why the keyed Alchemy endpoint is used.
 
 import { createSolanaRpc, address } from "@solana/kit";
 import { getTokenDetailCached } from "./token-detail-cache";
 import { fetchGeckoHolders } from "./gecko";
-import type { Holder, Distribution } from "./types";
+import type { Distribution, Developer, Holder } from "./types";
 
 /**
  * Holder count from Jupiter — read from the SHARED cached token-detail (the same
@@ -76,19 +78,22 @@ export async function fetchTopWallets(
   }
 }
 
-/**
- * Derive a concentration breakdown from the top-20 wallets' supply shares — a
- * REAL on-chain distribution for any token, including fresh ones Gecko hasn't
- * indexed. Top10 / 11-20 / Rest (3 bands; the 21-40 split needs >20 accounts,
- * which only Gecko provides). PURE. Returns undefined if there are no usable
- * percentages.
- */
-export function distributionFromWallets(wallets: Holder[]): Distribution | undefined {
-  const pcts = wallets.map((w) => w.pct).filter((p): p is number => p !== undefined);
-  if (pcts.length === 0) return undefined;
-  const sum = (a: number[]) => a.reduce((t, n) => t + n, 0);
-  const top10 = sum(pcts.slice(0, 10));
-  const next10 = sum(pcts.slice(10, 20));
-  const rest = Math.max(0, 100 - top10 - next10);
-  return { top10, next10, rest };
+/** The token's developer/creator wallet + supply share, from Gecko `/info`
+ *  (keyless). undefined when Gecko has no developer for this token. */
+export async function fetchDeveloper(
+  mint: string,
+  signal?: AbortSignal,
+): Promise<Developer | undefined> {
+  const { developer } = await fetchGeckoHolders(mint, signal);
+  return developer;
+}
+
+/** The token's prose description, from Gecko `/info` (keyless), for the "About"
+ *  card. undefined when Gecko has none. */
+export async function fetchDescription(
+  mint: string,
+  signal?: AbortSignal,
+): Promise<string | undefined> {
+  const { description } = await fetchGeckoHolders(mint, signal);
+  return description;
 }

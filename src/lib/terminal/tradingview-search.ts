@@ -79,18 +79,29 @@ function qualify(row: Row): string {
  * "symbol doesn't exist" screen (no own-chart fallback). Throws only on
  * network/HTTP error.
  */
+export type TradingViewSymbol = {
+  /** The symbol to hand the widget. */
+  symbol: string;
+  /** True only when TV genuinely carries a chartable series (a CEX spot pair or a
+   *  Solana DEX pool). False = the bare `${SYM}USD` give-up fallback (TV's "symbol
+   *  doesn't exist" screen). The caller uses this to decide whether to mount the
+   *  inline TV widget or fall back to our own lightweight-charts candles — so a
+   *  fresh pump.fun token never shows TV's dead error screen inline. */
+  chartable: boolean;
+};
+
 export async function resolveTradingViewSymbol(
   symbol: string,
   signal?: AbortSignal,
-): Promise<string> {
+): Promise<TradingViewSymbol> {
   const sym = symbol.trim().toUpperCase();
   const fallback = `${sym}USD`; // bare ticker → TV's native error screen
-  if (!sym) return fallback;
+  if (!sym) return { symbol: fallback, chartable: false };
 
   // 1) CEX spot pair.
   for (const r of await search(fallback, signal)) {
     if (typeof r.symbol === "string" && stripTags(r.symbol) === fallback && r.type === "spot") {
-      return fallback;
+      return { symbol: fallback, chartable: true };
     }
   }
 
@@ -98,9 +109,10 @@ export async function resolveTradingViewSymbol(
   const poolRe = new RegExp(`^${escapeRegExp(sym)}SOL_[A-Z0-9]+\\.USD$`, "i");
   for (const r of await search(`${sym}SOL`, signal)) {
     if (typeof r.symbol === "string" && r.type === "spot" && poolRe.test(stripTags(r.symbol))) {
-      return qualify(r);
+      return { symbol: qualify(r), chartable: true };
     }
   }
 
-  return fallback;
+  // TV has neither — bare ticker, NOT chartable (caller uses our own candles).
+  return { symbol: fallback, chartable: false };
 }

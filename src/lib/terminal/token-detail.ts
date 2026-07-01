@@ -76,6 +76,15 @@ export function mapTokenDetail(raw: RawToken): TokenDetail | null {
   const stats24 = raw.stats24h as RawStats;
   const change24h = numOr((stats24 as Record<string, unknown> | undefined)?.priceChange, 0);
 
+  // First-pool creation timestamp (ISO 8601 from Jupiter `firstPool.createdAt`) →
+  // UNIX seconds for the "Created · X ago" row. Drop anything unparseable rather
+  // than render an "Invalid Date".
+  const firstPool = raw.firstPool as Record<string, unknown> | undefined;
+  const createdMs = isNonEmptyString(firstPool?.createdAt)
+    ? Date.parse(firstPool.createdAt)
+    : NaN;
+  const createdAt = Number.isFinite(createdMs) ? Math.floor(createdMs / 1000) : undefined;
+
   const stats: Partial<Record<StatsKey, StatsWindow>> = {};
   const w5 = mapStats(raw.stats5m as RawStats);
   const w1 = mapStats(raw.stats1h as RawStats);
@@ -98,6 +107,8 @@ export function mapTokenDetail(raw: RawToken): TokenDetail | null {
     fdv: asNumber(raw.fdv),
     liquidity: asNumber(raw.liquidity),
     holderCount: asNumber(raw.holderCount),
+    circSupply: asNumber(raw.circSupply),
+    createdAt,
     stats,
     audit: mapAudit(raw.audit as RawAudit),
   };

@@ -7,10 +7,11 @@ import {
   type TokenDetail,
   type Candle,
   type Trade,
-  type Holder,
   type HolderInfo,
+  type Holder,
   type SwapQuote,
   isFiniteNumber,
+  isNonEmptyString,
 } from "./types";
 
 // Poll cadences — each MATCHES its route's revalidate window (see the route
@@ -66,22 +67,37 @@ function parseHolders(json: unknown): HolderInfo | null {
   const h = (json as { holders?: unknown })?.holders;
   if (!h || typeof h !== "object") return null;
   const obj = h as Partial<HolderInfo>;
-  const topWallets = Array.isArray(obj.topWallets)
-    ? obj.topWallets.filter(
+  // Keep the developer only when its address is a real string (the pct is
+  // optional). Anything malformed is dropped rather than rendered.
+  const developer =
+    obj.developer && isNonEmptyString(obj.developer.address)
+      ? { address: obj.developer.address, pct: obj.developer.pct }
+      : undefined;
+  const description = isNonEmptyString(obj.description) ? obj.description : undefined;
+  // Keep only well-formed wallet rows (real address + amount string); a malformed
+  // entry is dropped rather than rendered.
+  const wallets = Array.isArray(obj.wallets)
+    ? obj.wallets.filter(
         (w): w is Holder =>
-          typeof w === "object" && w !== null && typeof (w as Holder).address === "string",
+          typeof w === "object" &&
+          w !== null &&
+          isNonEmptyString((w as Holder).address) &&
+          typeof (w as Holder).amount === "string",
       )
-    : [];
-  return { count: obj.count, distribution: obj.distribution, topWallets };
+    : undefined;
+  return { count: obj.count, distribution: obj.distribution, developer, description, wallets };
 }
 
-// { symbol: string } — the best TV symbol to chart (a CEX pair, a DEX pool, or the
-// bare `${SYM}USD` for TV's native error screen). Empty string = cold failure;
-// rejected here so the caller keeps polling rather than charting "".
-function parseTvSymbol(json: unknown): { symbol: string } | null {
+// { symbol, chartable } — the best TV symbol to chart (a CEX pair, a DEX pool, or
+// the bare `${SYM}USD` fallback). `chartable` is false for the bare fallback, so
+// the caller can use its own candles instead of TV's dead screen. Empty string =
+// cold failure; rejected here so the caller keeps polling rather than charting "".
+function parseTvSymbol(json: unknown): { symbol: string; chartable: boolean } | null {
   if (typeof json !== "object" || json === null) return null;
   const s = (json as { symbol?: unknown }).symbol;
-  return typeof s === "string" && s.length > 0 ? { symbol: s } : null;
+  if (typeof s !== "string" || s.length === 0) return null;
+  const chartable = (json as { chartable?: unknown }).chartable === true;
+  return { symbol: s, chartable };
 }
 
 function parseQuote(json: unknown): SwapQuote | null {
@@ -175,9 +191,9 @@ const TV_SYMBOL_MS = 600_000;
 export function useTradingViewSymbol(
   symbol: string | null,
   enabled = true,
-): PolledResource<{ symbol: string }> {
+): PolledResource<{ symbol: string; chartable: boolean }> {
   const key = symbol && symbol.trim() ? symbol.trim().toUpperCase() : null;
-  return usePolledResource<{ symbol: string }>({
+  return usePolledResource<{ symbol: string; chartable: boolean }>({
     key,
     url: (s) => `/api/tv-symbol/${encodeURIComponent(s)}`,
     parse: parseTvSymbol,

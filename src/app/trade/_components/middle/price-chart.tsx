@@ -9,6 +9,7 @@ import {
   ColorType,
   CrosshairMode,
   LineStyle,
+  PriceScaleMode,
   type IChartApi,
   type ISeriesApi,
   type CandlestickData,
@@ -17,6 +18,9 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import type { Candle } from "@/lib/terminal/types";
+
+// The fallback chart's price-scale mode — fomo's "auto / log / %" axis toggles.
+export type ScaleMode = "auto" | "log" | "percent";
 
 // Self-rendered chart (TradingView's open-source lightweight-charts), fed by our
 // cached GeckoTerminal OHLCV. Two modes (the type-switcher in chart-panel):
@@ -33,22 +37,22 @@ import type { Candle } from "@/lib/terminal/types";
 
 export type ChartType = "area" | "candles";
 
-// Palette — blue is the brand accent and the area-line colour, so candles' UP
-// colour matches it (per the chosen design); DOWN stays a refined red. Grid is
-// barely-there horizontal-only; crosshair is a muted dashed line with tag labels.
+// Palette — fomo's candle colours (sampled live from fomo.family's terminal):
+// up = green rgb(33,201,94), down = orange-red rgb(255,98,46). This is what makes
+// the chart read as a real memecoin trading terminal. Grid is barely-there
+// horizontal-only; crosshair is a muted dashed line with tag labels.
 const THEME = {
-  blue: "#78b4ff", // candles up — our accent
-  blueWick: "rgba(120,180,255,0.6)",
-  // Area/mountain — NEUTRAL "black-theme" look: a soft white line over a dark,
-  // near-black gradient fill (pure black would vanish on the black bg; this reads
-  // as the line floating over a dark mountain). Replaces the old blue area.
+  up: "#21c95e", // candles up — fomo green
+  upWick: "rgba(33,201,94,0.6)",
+  // Area/mountain — soft white line over a dark gradient fill (kept for the
+  // optional area mode; the default in-page chart is candles).
   areaLine: "#e8eaed",
   areaFillTop: "rgba(255,255,255,0.07)",
   areaFillBottom: "rgba(255,255,255,0)",
-  down: "#f0556d", // refined red
-  downWick: "rgba(240,85,109,0.6)",
-  upVol: "rgba(120,180,255,0.22)",
-  downVol: "rgba(240,85,109,0.22)",
+  down: "#ff622e", // candles down — fomo orange-red
+  downWick: "rgba(255,98,46,0.6)",
+  upVol: "rgba(33,201,94,0.22)",
+  downVol: "rgba(255,98,46,0.22)",
   text: "#8b94a6",
   grid: "rgba(255,255,255,0.03)",
   crosshair: "rgba(255,255,255,0.25)",
@@ -95,11 +99,18 @@ function toVolume(c: Candle): HistogramData {
 export function PriceChart({
   candles,
   type = "area",
+  symbol,
+  scaleMode = "auto",
 }: {
   candles: Candle[];
   type?: ChartType;
+  /** Token symbol shown in the OHLC legend (fomo-style). */
+  symbol?: string;
+  /** Price-scale mode for the auto/log/% toggle row. */
+  scaleMode?: ScaleMode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const legendRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   // One of these is set depending on `type`; both share the setData/update path.
   const priceRef = useRef<ISeriesApi<"Candlestick"> | ISeriesApi<"Area"> | null>(null);
@@ -145,10 +156,10 @@ export function PriceChart({
 
     if (type === "candles") {
       priceRef.current = chart.addSeries(CandlestickSeries, {
-        upColor: THEME.blue,
+        upColor: THEME.up,
         downColor: THEME.down,
         borderVisible: false,
-        wickUpColor: THEME.blueWick,
+        wickUpColor: THEME.upWick,
         wickDownColor: THEME.downWick,
       });
     } else {
@@ -234,5 +245,73 @@ export function PriceChart({
     lastTimeRef.current = newest.time;
   }, [candles, type]);
 
-  return <div className="price-chart" ref={containerRef} />;
+  // Price-scale mode (fomo's auto / log / % toggle).
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    const mode =
+      scaleMode === "log"
+        ? PriceScaleMode.Logarithmic
+        : scaleMode === "percent"
+          ? PriceScaleMode.Percentage
+          : PriceScaleMode.Normal;
+    chart.priceScale("right").applyOptions({ mode });
+  }, [scaleMode]);
+
+  // OHLC legend (fomo's "O… H… L… C…  Vol" line over the chart) — updates on
+  // crosshair move, else shows the latest candle. Painted into legendRef so the
+  // chart canvas stays clean.
+  useEffect(() => {
+    const chart = chartRef.current;
+    const legend = legendRef.current;
+    if (!chart || !legend) return;
+
+    const fmt = (n: number) => {
+      if (n >= 1) return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      // sub-1 prices: enough significant digits for memecoins
+      return n.toPrecision(4);
+    };
+    const render = (c: Candle | undefined) => {
+      if (!c) {
+        legend.innerHTML = "";
+        return;
+      }
+      const up = c.close >= c.open;
+      const col = up ? THEME.up : THEME.down;
+      const chg = c.open !== 0 ? ((c.close - c.open) / c.open) * 100 : 0;
+      const sym = symbol ? `<b style="color:#f7f7f7">${symbol}</b> · ` : "";
+      legend.innerHTML =
+        `${sym}<span style="color:${col}">O</span>${fmt(c.open)} ` +
+        `<span style="color:${col}">H</span>${fmt(c.high)} ` +
+        `<span style="color:${col}">L</span>${fmt(c.low)} ` +
+        `<span style="color:${col}">C</span>${fmt(c.close)} ` +
+        `<span style="color:${col}">${up ? "+" : ""}${chg.toFixed(2)}%</span>` +
+        `<span style="color:#8b94a6"> · Vol ${fmt(c.volume)}</span>`;
+    };
+
+    const latest = () => (candles.length ? candles[candles.length - 1] : undefined);
+    render(latest());
+
+    const onMove = (param: { time?: unknown; seriesData?: Map<unknown, unknown> }) => {
+      if (param.time === undefined) {
+        render(latest());
+        return;
+      }
+      const hit = candles.find((c) => c.time === param.time);
+      render(hit ?? latest());
+    };
+    chart.subscribeCrosshairMove(onMove);
+    return () => chart.unsubscribeCrosshairMove(onMove);
+  }, [candles, symbol]);
+
+  return (
+    <div className="price-chart relative size-full">
+      {/* fomo-style OHLC legend overlay (sits over the top-left of the chart) */}
+      <div
+        ref={legendRef}
+        className="pointer-events-none absolute left-3 top-2 z-[2] font-mono text-[12px] tabular-nums text-muted"
+      />
+      <div className="size-full" ref={containerRef} />
+    </div>
+  );
 }

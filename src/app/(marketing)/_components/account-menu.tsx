@@ -65,12 +65,13 @@ export function AccountMenu({
       </button>
 
       {open && (
-        // Pure-black glassy card with a neutral white INSET edge ring
-        // (`account-glow`) that breathes inside the border — contained, no
-        // colour wash. Monochrome; no green on the card. See globals.css.
+        // Glassy card on the app's NAVY card surface (bg-card #12111a), so it
+        // matches the terminal's panels instead of reading as a pure-black hole.
+        // Keeps the neutral white INSET edge ring (`account-glow`) + backdrop blur;
+        // still monochrome, no green wash. See globals.css.
         <div
           role="menu"
-          className={`account-glow absolute top-[calc(100%+10px)] z-[200] w-[290px] rounded-3xl border border-white/[0.08] bg-black/90 p-3 backdrop-blur-2xl
+          className={`account-glow absolute top-[calc(100%+10px)] z-[200] w-[290px] rounded-3xl border border-white/[0.08] bg-card/95 p-3 backdrop-blur-2xl
             ${mobile ? "left-1/2 -translate-x-1/2" : "right-0"}`}
         >
           <div>

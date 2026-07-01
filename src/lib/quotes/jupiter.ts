@@ -34,6 +34,7 @@ type JupToken = {
   icon?: unknown;
   usdPrice?: unknown;
   holderCount?: unknown;
+  mcap?: unknown;
   stats24h?: JupTokenStats;
 };
 
@@ -66,6 +67,7 @@ export function mapJupToken(raw: JupToken): Token | null {
     change24h,
     direction: change24h < 0 ? "down" : "up",
     holderCount: isFiniteNumber(raw.holderCount) ? raw.holderCount : undefined,
+    marketCap: isFiniteNumber(raw.mcap) ? raw.mcap : undefined,
   };
 }
 

@@ -49,6 +49,11 @@ export type TokenDetail = {
   fdv?: number;
   liquidity?: number;
   holderCount?: number;
+  /** Circulating supply in whole tokens (Jupiter `circSupply`), for the About card. */
+  circSupply?: number;
+  /** UNIX seconds of the token's first-pool creation (Jupiter `firstPool.createdAt`),
+   *  for the "Created · X ago" row. */
+  createdAt?: number;
   /** Per-window stats; a window may be absent for a brand-new token. */
   stats: Partial<Record<StatsKey, StatsWindow>>;
   /** Audit block; absent if the provider didn't return one. */
@@ -93,15 +98,6 @@ export type Trade = {
 
 // ── Holders (MIDDLE) ──────────────────────────────────────────────────────
 
-export type Holder = {
-  /** Token-account address (largest accounts; not always the owner wallet). */
-  address: string;
-  /** Raw base-unit amount, as a string (can exceed Number.MAX_SAFE_INTEGER). */
-  amount: string;
-  /** Share of total supply as a percent (0–100), if computable. */
-  pct?: number;
-};
-
 /**
  * Supply share by holder-rank band, each a percent 0–100. `next20` (ranks 21–40)
  * is present only when the data comes from GeckoTerminal's 4-band breakdown; when
@@ -115,18 +111,44 @@ export type Distribution = {
   rest: number;
 };
 
+/** The token's developer/creator wallet and its share of supply (GeckoTerminal
+ *  `/info` exposes both, keyless). A fomo-style "who launched this" signal that
+ *  works for every indexed token. */
+export type Developer = {
+  address: string;
+  /** Dev's share of supply as a percent (0–100), if Gecko reports it. */
+  pct?: number;
+};
+
+/** One top-holder token account (Alchemy `getTokenLargestAccounts`). */
+export type Holder = {
+  /** Token-account address (largest accounts; not always the owner wallet). */
+  address: string;
+  /** Raw base-unit amount, as a string (can exceed Number.MAX_SAFE_INTEGER). */
+  amount: string;
+  /** Share of total supply as a percent (0–100), if computable. */
+  pct?: number;
+};
+
 /**
- * Holder picture for a token. `count` (Jupiter), `distribution` (Gecko when it has
- * it, else computed from `topWallets`), and the optional per-wallet `topWallets`
- * list (Alchemy) are each from independent sources.
+ * Holder picture for a token. Each field is an INDEPENDENT source (the route
+ * caches each on its own success, so one source failing can't poison another):
+ *   • count, distribution, developer, description → GeckoTerminal `/info`
+ *   • wallets → Alchemy `getTokenLargestAccounts` (top-20; needs ALCHEMY_RPC_URL).
+ *     Verified live returning 20 wallets in ~7.6s — the earlier "it hangs on the
+ *     free tier" claim was stale; the call works with our configured key.
  */
 export type HolderInfo = {
   /** Total holder count, if known. */
   count?: number;
   /** Supply concentration by rank band. */
   distribution?: Distribution;
-  /** Optional per-wallet top holders (needs ALCHEMY_RPC_URL). */
-  topWallets: Holder[];
+  /** Developer/creator wallet + its supply share, if Gecko reports it. */
+  developer?: Developer;
+  /** Token prose description (Gecko `/info`), for the "About" card. */
+  description?: string;
+  /** Top-20 token accounts by balance, each with its supply share (Alchemy). */
+  wallets?: Holder[];
 };
 
 // ── Swap quote (RIGHT) ────────────────────────────────────────────────────

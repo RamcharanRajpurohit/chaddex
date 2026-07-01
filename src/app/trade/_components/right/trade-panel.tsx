@@ -19,6 +19,7 @@ import { bigToFloat } from "@/lib/terminal/paper/store";
 // SOL has 9 decimals — lamports→SOL is bigToFloat(x, 9).
 const SOL_DECIMALS = 9;
 import { PositionPanel } from "./position-panel";
+import { MarketStats } from "./market-stats";
 
 type Side = "buy" | "sell";
 const SOL_PRESETS = ["0.1", "0.5", "1", "5"];
@@ -150,27 +151,18 @@ export function TradePanel({ mint }: { mint: string }) {
   const balanceSol = bigToFloat(state.balanceLamports, SOL_DECIMALS);
 
   return (
-    <div className="flex flex-col gap-4 p-5">
-      {/* paper balance — prominent glass chip (neutral; balance isn't a "gain") */}
-      <div className="flex items-center justify-between rounded-2xl border border-white/[0.07] bg-card px-4 py-3">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-dim">
-          Paper balance
-        </span>
-        <span className="text-[16px] font-extrabold tabular-nums text-white">
-          {balanceSol.toFixed(3)} SOL
-        </span>
-      </div>
-
-      {/* Buy / Sell toggle — white-outline active (Toggle B): the active side gets
-          a white border + white text, inactive is muted. Matches the white CTA. */}
-      <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="Buy or sell">
+    <div className="flex flex-col gap-2.5 px-4 pb-4 pt-3">
+      {/* Buy / Sell toggle — fomo treatment (captured live): the active side fills
+          with a tinted wash of its semantic colour (green Buy / red Sell) and the
+          label takes that colour; the inactive side is a muted dark cell. */}
+      <div className="grid grid-cols-2 gap-2 rounded-xl bg-card p-1" role="tablist" aria-label="Buy or sell">
         <button
           role="tab"
           aria-selected={side === "buy"}
-          className={`rounded-full border py-2.5 text-[15px] font-extrabold transition-colors ${
+          className={`rounded-lg py-2 text-[14px] font-extrabold transition-colors ${
             side === "buy"
-              ? "border-white/60 text-white"
-              : "border-transparent text-muted hover:text-white"
+              ? "bg-green/20 text-green"
+              : "text-muted hover:text-white"
           }`}
           onClick={() => onSideChange("buy")}
         >
@@ -179,10 +171,10 @@ export function TradePanel({ mint }: { mint: string }) {
         <button
           role="tab"
           aria-selected={side === "sell"}
-          className={`rounded-full border py-2.5 text-[15px] font-extrabold transition-colors ${
+          className={`rounded-lg py-2 text-[14px] font-extrabold transition-colors ${
             side === "sell"
-              ? "border-white/60 text-white"
-              : "border-transparent text-muted hover:text-white"
+              ? "bg-red/20 text-red"
+              : "text-muted hover:text-white"
           }`}
           onClick={() => onSideChange("sell")}
         >
@@ -190,8 +182,9 @@ export function TradePanel({ mint }: { mint: string }) {
         </button>
       </div>
 
-      {/* amount — big input in a glass card */}
-      <div className="rounded-2xl border border-border bg-card p-4">
+      {/* amount — input in a glass card (compact: the label sits inline with the
+          value to keep the card short, matching fomo's tight buy box). */}
+      <div className="rounded-xl border border-border bg-card px-3.5 py-2">
         <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-dim">
           {side === "buy" ? "Spend (SOL)" : `Sell (${token?.symbol ?? "token"})`}
         </span>
@@ -201,7 +194,7 @@ export function TradePanel({ mint }: { mint: string }) {
           value={amount}
           onChange={(e) => onAmountChange(e.target.value)}
           aria-label={side === "buy" ? "Amount of SOL to spend" : "Amount of token to sell"}
-          className="mt-1 w-full bg-transparent text-[28px] font-extrabold tracking-[-0.02em] tabular-nums text-white placeholder:text-dim focus:outline-none"
+          className="w-full bg-transparent text-[22px] font-extrabold leading-tight tracking-[-0.02em] tabular-nums text-white placeholder:text-dim focus:outline-none"
         />
       </div>
 
@@ -210,7 +203,7 @@ export function TradePanel({ mint }: { mint: string }) {
           {SOL_PRESETS.map((p) => (
             <button
               key={p}
-              className="rounded-xl border border-border bg-card py-2 text-[13px] font-bold text-muted transition-colors hover:bg-card-2 hover:text-white"
+              className="rounded-lg bg-card py-1.5 text-[13px] font-bold text-muted transition-colors hover:bg-card-2 hover:text-white"
               onClick={() => onAmountChange(p)}
             >
               {p}
@@ -223,7 +216,7 @@ export function TradePanel({ mint }: { mint: string }) {
           {["25", "50", "100"].map((p) => (
             <button
               key={p}
-              className="rounded-xl border border-border bg-card py-2 text-[13px] font-bold text-muted transition-colors hover:bg-card-2 hover:text-white"
+              className="rounded-lg bg-card py-1.5 text-[13px] font-bold text-muted transition-colors hover:bg-card-2 hover:text-white"
               onClick={() => {
                 // EXACT base units (no float round-trip): 100% = the full holding,
                 // so a position larger than 2^53 base units still closes cleanly.
@@ -238,7 +231,12 @@ export function TradePanel({ mint }: { mint: string }) {
         </div>
       )}
 
-      <dl className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-4 text-[13px]">
+      {/* available balance line (fomo's "$0 available" under the presets) */}
+      <p className="-mt-1 text-[12px] text-dim">
+        {balanceSol.toFixed(3)} SOL available
+      </p>
+
+      <dl className="flex flex-col gap-1.5 rounded-xl border border-border bg-card px-3.5 py-2.5 text-[13px]">
         <div className="flex items-center justify-between">
           <dt className="text-muted">Receive</dt>
           <dd className="font-semibold tabular-nums text-white">{loading ? "…" : received}</dd>
@@ -265,10 +263,16 @@ export function TradePanel({ mint }: { mint: string }) {
         </div>
       </dl>
 
-      {/* signature CTA — soft-white Buy / red Sell, ⚡ icon, contained width.
-          Logged out → "Log in to trade" (clicking opens the Privy modal). */}
+      {/* signature CTA — fomo behaviour: DARK/idle until a valid amount is entered,
+          then fills green (Buy) / red (Sell). Logged out → "Log in to trade". */}
       <button
-        className={`tcta mx-auto w-full max-w-[15rem] ${authenticated && side === "sell" ? "tcta--sell" : ""}`}
+        className={`tcta w-full ${
+          authenticated && (amountBaseUnits === null || amountBaseUnits <= 0n)
+            ? "tcta--idle"
+            : authenticated && side === "sell"
+              ? "tcta--sell"
+              : ""
+        }`}
         onClick={submit}
         disabled={authenticated && !token}
       >
@@ -286,9 +290,10 @@ export function TradePanel({ mint }: { mint: string }) {
         </p>
       )}
 
-      <p className="text-center text-[11px] leading-relaxed text-dim">
-        Paper trading — real prices & routes, simulated fills. No real SOL spent.
-      </p>
+      {/* fomo-style market activity: buys/sells + buy-vol/sell-vol + buyers/sellers
+          ratio bars across a selectable window (no new API — derived from the
+          window stats + trade feed we already poll). */}
+      <MarketStats mint={mint} />
 
       <PositionPanel mint={mint} />
     </div>

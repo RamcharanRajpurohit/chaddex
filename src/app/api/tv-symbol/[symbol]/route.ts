@@ -12,22 +12,26 @@
 // Returns { symbol: string } — always a usable widget symbol.
 
 import { cacheLife } from "next/cache";
-import { resolveTradingViewSymbol } from "@/lib/terminal/tradingview-search";
+import {
+  resolveTradingViewSymbol,
+  type TradingViewSymbol,
+} from "@/lib/terminal/tradingview-search";
 import { createKeyedFetcher, jsonWithCache } from "@/lib/terminal/route-cache";
 
-// Keyed by the (upper-cased) token symbol. On a cold upstream failure we degrade
-// to the bare `${KEY}USD` — the SAME always-valid answer the resolver returns for
-// a miss (→ the widget's native error screen). This is genuinely correct, so it's
-// safe for `use cache` to store; we must NOT cache an empty/sentinel the client
-// rejects, or a transient blip would pin the token to a dead chart for a day.
-const resolve = createKeyedFetcher<{ symbol: string }>({
+// Keyed by the (upper-cased) token symbol. Returns { symbol, chartable }:
+// chartable=true only when TV genuinely carries a series (CEX pair / DEX pool);
+// false = the bare `${KEY}USD` give-up fallback. The client mounts the inline TV
+// widget only when chartable, else uses our own candles — so a fresh pump token
+// never shows TV's dead error screen. On a cold upstream failure we degrade to a
+// non-chartable bare ticker (safe to cache; the client just uses its own candles).
+const resolve = createKeyedFetcher<TradingViewSymbol>({
   label: "tv-symbol",
-  fetcher: async (key) => ({ symbol: await resolveTradingViewSymbol(key) }),
+  fetcher: (key) => resolveTradingViewSymbol(key),
   isGood: (v) => v.symbol.length > 0,
-  empty: () => ({ symbol: "" }),
+  empty: () => ({ symbol: "", chartable: false }),
 });
 
-async function resolveCached(symbol: string): Promise<{ symbol: string }> {
+async function resolveCached(symbol: string): Promise<TradingViewSymbol> {
   "use cache";
   cacheLife({ stale: 3600, revalidate: 86400, expire: 172800 });
   return resolve(symbol.toUpperCase());
@@ -39,11 +43,10 @@ export async function GET(
 ) {
   const { symbol } = await params;
   const bare = `${symbol.toUpperCase()}USD`;
-  const { symbol: resolved } = await resolveCached(symbol);
-  // A cold upstream failure caches an empty symbol (createKeyedFetcher.empty);
-  // never hand the client an empty value (it would reject it and stay stuck on
-  // the fallback) — substitute the always-valid bare ticker here.
-  const result = { symbol: resolved.length > 0 ? resolved : bare };
-  // Long CDN cache — resolution is effectively static.
+  const resolved = await resolveCached(symbol);
+  // A cold upstream failure caches an empty symbol; never hand the client an empty
+  // value — substitute the always-valid (non-chartable) bare ticker.
+  const result: TradingViewSymbol =
+    resolved.symbol.length > 0 ? resolved : { symbol: bare, chartable: false };
   return jsonWithCache(result, 3600, 86400);
 }

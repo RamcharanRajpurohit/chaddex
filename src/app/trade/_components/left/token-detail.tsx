@@ -1,17 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { useSelectedToken } from "../token-detail-context";
 import { deriveChecklist, checklistScore } from "@/lib/terminal/safety";
 import { type StatsKey } from "@/lib/terminal/types";
-import {
-  formatPrice,
-  formatChange,
-  formatUsdCompact,
-  formatCount,
-  shortAddress,
-} from "@/lib/quotes/format";
+import { formatUsdCompact, formatCount } from "@/lib/quotes/format";
 
 const WINDOWS: StatsKey[] = ["5m", "1h", "6h", "24h"];
 
@@ -41,45 +34,15 @@ export function TokenDetailPanel() {
 
   const stats = token.stats[win];
   const checks = deriveChecklist(token.audit);
-  const down = token.change24h < 0;
 
   return (
     <div className="flex flex-col gap-5 border-t border-border p-5">
-      {/* identity + price on one row (wider middle column) */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {token.logoURI ? (
-            <Image src={token.logoURI} alt="" width={44} height={44} className="size-11 flex-none rounded-full" unoptimized />
-          ) : (
-            <span className="size-11 flex-none rounded-full bg-card-2" />
-          )}
-          <div className="flex min-w-0 flex-col">
-            <span className="text-lg font-extrabold tracking-[-0.02em] text-white">{token.symbol}</span>
-            <span className="truncate text-[13px] text-muted">{token.name}</span>
-          </div>
-          <CopyAddress mint={token.mint} />
-        </div>
-        <div className="flex items-baseline gap-2.5">
-          <span className="text-[34px] font-extrabold leading-none tracking-[-0.03em] tabular-nums text-white">
-            {formatPrice(token.price)}
-          </span>
-          <span className={`flex items-center gap-1 text-[15px] font-bold tabular-nums ${down ? "text-red" : "text-green"}`}>
-            <span aria-hidden>{down ? "▼" : "▲"}</span>
-            {formatChange(token.change24h)}
-          </span>
-        </div>
-      </div>
+      {/* The identity + price + Market-cap/Liquidity/FDV/Holders cells moved into
+          the TokenHeader strip ABOVE the chart (fomo layout). This block keeps the
+          per-window activity stats + the safety checklist. */}
 
-      {/* key stats as glass cards — 4-up on the wider middle column */}
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        <StatCard label="Market cap" value={formatUsdCompact(token.mcap)} />
-        <StatCard label="Liquidity" value={formatUsdCompact(token.liquidity)} />
-        <StatCard label="FDV" value={formatUsdCompact(token.fdv)} />
-        <StatCard label="Holders" value={formatCount(token.holderCount)} />
-      </div>
-
-      {/* window pills — blue-tinted glass active (neutral interactive; green is
-          reserved for gains, not UI chrome) */}
+      {/* window pills — neutral filled active chip (fomo chrome; green stays
+          reserved for gains, not UI). */}
       <div className="flex w-full max-w-xs gap-1.5 rounded-full border border-white/[0.07] bg-card p-1" role="tablist" aria-label="Stat window">
         {WINDOWS.map((w) => (
           <button
@@ -87,7 +50,7 @@ export function TokenDetailPanel() {
             role="tab"
             aria-selected={w === win}
             className={`flex-1 rounded-full py-1.5 text-[13px] font-bold transition-colors ${
-              w === win ? "bg-blue/15 text-blue" : "text-muted hover:text-white"
+              w === win ? "bg-card-2 text-white" : "text-muted hover:text-white"
             }`}
             onClick={() => setWin(w)}
           >
@@ -140,28 +103,6 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone?:
         {value}
       </div>
     </div>
-  );
-}
-
-function CopyAddress({ mint }: { mint: string }) {
-  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
-  return (
-    <button
-      type="button"
-      className="ml-auto flex-none rounded-full border border-border bg-card px-3 py-1.5 font-mono text-[11px] text-muted transition-colors hover:bg-card-2 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green"
-      title="Copy mint address"
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(mint);
-          setState("copied");
-        } catch {
-          setState("failed");
-        }
-        setTimeout(() => setState("idle"), 1200);
-      }}
-    >
-      {state === "copied" ? "Copied ✓" : state === "failed" ? "Copy failed" : shortAddress(mint)}
-    </button>
   );
 }
 
